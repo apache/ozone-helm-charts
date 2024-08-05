@@ -23,12 +23,29 @@
 
 ## Introduction
 
-This chart bootstraps an [Ozone](https://ozone.apache.org) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
+This chart bootstraps an [Apache Ozone](https://ozone.apache.org) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
 
 ## Requirements
 
 - Kubernetes cluster 1.27+
-- Helm 3.0+
+- Helm 3
+
+## Helm charts repository
+Use the following command to add the repository to Helm client configuration:
+```shell
+helm repo add ozone https://apache.github.io/ozone-helm-charts/
+```
+
+## Installing the chart
+Install the chart with `ozone` release name:
+```shell
+helm install ozone ozone/ozone
+```
+
+## Uninstalling the chart
+```shell
+helm uninstall ozone
+```
 
 ## Documentation
 
