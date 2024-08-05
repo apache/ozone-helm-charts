@@ -17,4 +17,30 @@
 
 # Helm charts for Apache Ozone
 
-This repository will provide Helm charts for installing Apache Ozone on Kubernetes.
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+This repository provides Helm charts for installing Apache Ozone on Kubernetes.
+
+## Helm charts repository
+Use the following command to add the repository to Helm client configuration:
+```shell
+helm repo add ozone https://apache.github.io/ozone-helm-charts/
+```
+List the latest stable versions of available Helm charts with the commands:
+```shell
+helm repo update ozone
+helm search repo ozone
+```
+
+## Contributing
+
+All contributions are welcome.
+Please open a [Jira](https://issues.apache.org/jira/projects/HDDS/issues) issue and create a pull request.
+
+For more information, please check the [Contribution guideline](https://github.com/apache/ozone/blob/master/CONTRIBUTING.md).
+
+## License
+
+The Apache Ozone project is licensed under the Apache 2.0 License.
+
+See the [LICENSE](./LICENSE) file for details.
