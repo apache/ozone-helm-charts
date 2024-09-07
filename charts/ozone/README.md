@@ -27,7 +27,7 @@ This chart bootstraps an [Apache Ozone](https://ozone.apache.org) deployment on 
 
 ## Requirements
 
-- Kubernetes cluster 1.27+
+- Kubernetes cluster 1.28+
 - Helm 3
 
 ## Helm charts repository
