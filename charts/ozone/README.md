@@ -47,6 +47,12 @@ helm install ozone ozone/ozone
 helm uninstall ozone
 ```
 
+## Configuration
+Refer default `values.yaml` file of the chart for all the possible configuration properties:
+```shell
+helm show values ozone/ozone
+```
+
 ## Documentation
 
 Documentation lives on the Apache Ozone [website](https://ozone.apache.org/docs/).
