@@ -88,10 +88,11 @@ datanode:
   persistence:
     # Enable persistence
     enabled: false
+    # Persistence access modes
+    accessModes:
+      - ReadWriteOnce
     # Path for datanode volume mount
     path: /data
-    # Existing PVC name to use
-    existingClaim: ~
     # Volume size
     size: 10Gi
     # The name of a specific storage class name to use
@@ -126,10 +127,11 @@ om:
   persistence:
     # Enable persistence
     enabled: false
+    # Persistence access modes
+    accessModes:
+      - ReadWriteOnce
     # Path for Ozone Manager volume mount
     path: /data
-    # Existing PVC name to use
-    existingClaim: ~
     # Volume size
     size: 10Gi
     # The name of a specific storage class name to use
@@ -164,10 +166,11 @@ s3g:
   persistence:
     # Enable persistence
     enabled: false
+    # Persistence access modes
+    accessModes:
+      - ReadWriteOnce
     # Path for S3 Gateway volume mount
     path: /data
-    # Existing PVC name to use
-    existingClaim: ~
     # Volume size
     size: 10Gi
     # The name of a specific storage class name to use
@@ -202,10 +205,11 @@ scm:
   persistence:
     # Enable persistence
     enabled: false
+    # Persistence access modes
+    accessModes:
+      - ReadWriteOnce
     # Path for Storage Container Manager volume mount
     path: /data
-    # Existing PVC name to use
-    existingClaim: ~
     # Volume size
     size: 10Gi
     # The name of a specific storage class name to use

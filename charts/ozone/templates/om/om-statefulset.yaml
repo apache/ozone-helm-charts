@@ -79,7 +79,7 @@ spec:
           volumeMounts:
             - name: config
               mountPath: {{ .Values.configuration.dir }}
-            - name: data
+            - name: {{ .Release.Name }}-om
               mountPath: {{ .Values.om.persistence.path }}
       {{- with $nodeSelector }}
       nodeSelector: {{- toYaml . | nindent 8 }}
@@ -98,15 +98,29 @@ spec:
           projected:
             sources:
               - configMap:
-                  name: {{ .Release.Name }}
+                  name: {{ .Release.Name }}-ozone
               {{- with .Values.configuration.filesFrom }}
-                {{- tpl (toYaml .) $ | nindent 8 }}
+                {{- tpl (toYaml .) $ | nindent 14 }}
               {{- end }}
-        {{- if .Values.om.persistence.enabled }}
-        - name: data
-          persistentVolumeClaim:
-            claimName: {{ .Values.om.persistence.existingClaim | default (printf "%s-%s" .Release.Name "om") }}
-        {{- else }}
-        - name: data
+        {{- if not .Values.om.persistence.enabled }}
+        - name: {{ .Release.Name }}-om
           emptyDir: {}
         {{- end }}
+  {{- if .Values.om.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: {{ .Release.Name }}-om
+        labels:
+          {{- include "ozone.labels" . | nindent 10 }}
+          app.kubernetes.io/component: om
+      spec:
+        {{- with .Values.om.persistence.accessModes }}
+        accessModes: {{- toYaml . | nindent 10 }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.om.persistence.size }}
+        {{- with .Values.scm.persistence.storageClassName }}
+        storageClassName: {{ . }}
+        {{- end }}
+  {{- end }}

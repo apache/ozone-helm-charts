@@ -59,7 +59,7 @@ spec:
           volumeMounts:
             - name: config
               mountPath: {{ .Values.configuration.dir }}
-            - name: data
+            - name: {{ .Release.Name }}-scm
               mountPath: {{ .Values.scm.persistence.path }}
       containers:
         - name: scm
@@ -94,7 +94,7 @@ spec:
           volumeMounts:
             - name: config
               mountPath: {{ .Values.configuration.dir }}
-            - name: data
+            - name: {{ .Release.Name }}-scm
               mountPath: {{ .Values.scm.persistence.path }}
       {{- with $nodeSelector }}
       nodeSelector: {{- toYaml . | nindent 8 }}
@@ -113,15 +113,29 @@ spec:
           projected:
             sources:
               - configMap:
-                  name: {{ .Release.Name }}
+                  name: {{ .Release.Name }}-ozone
               {{- with .Values.configuration.filesFrom }}
-                {{- tpl (toYaml .) $ | nindent 8 }}
+                {{- tpl (toYaml .) $ | nindent 14 }}
               {{- end }}
-        {{- if .Values.scm.persistence.enabled }}
-        - name: data
-          persistentVolumeClaim:
-            claimName: {{ .Values.scm.persistence.existingClaim | default (printf "%s-%s" .Release.Name "scm") }}
-        {{- else }}
-        - name: data
+        {{- if not .Values.scm.persistence.enabled }}
+        - name: {{ .Release.Name }}-scm
           emptyDir: {}
         {{- end }}
+  {{- if .Values.scm.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: {{ .Release.Name }}-scm
+        labels:
+          {{- include "ozone.labels" . | nindent 10 }}
+          app.kubernetes.io/component: scm
+      spec:
+        {{- with .Values.scm.persistence.accessModes }}
+        accessModes: {{- toYaml . | nindent 10 }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.scm.persistence.size }}
+        {{- with .Values.scm.persistence.storageClassName }}
+        storageClassName: {{ . }}
+        {{- end }}
+  {{- end }}
