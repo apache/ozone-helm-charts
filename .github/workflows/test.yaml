@@ -1,12 +1,7 @@
 name: Test Charts
 
-on:
-  pull_request:
-    branches:
-      - "*"
-  push:
-    branches:
-      - "*"
+on: pull_request
+
 jobs:
   test:
     runs-on: ubuntu-latest
