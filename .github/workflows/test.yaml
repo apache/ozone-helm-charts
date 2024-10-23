@@ -3,10 +3,10 @@ name: Test Charts
 on:
   pull_request:
     branches:
-      - "*"
+      - '*'
   push:
     branches:
-      - "*"
+      - '*'
 jobs:
   test:
     runs-on: ubuntu-latest
