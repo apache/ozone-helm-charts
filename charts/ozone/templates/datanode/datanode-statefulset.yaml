@@ -98,7 +98,7 @@ spec:
               {{- end }}
         {{- if not .Values.datanode.persistence.enabled }}
         - name: {{ .Release.Name }}-datanode
-          emptyDir: { }
+          emptyDir: {}
         {{- end }}
   {{- if .Values.datanode.persistence.enabled }}
   volumeClaimTemplates:
