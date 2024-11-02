@@ -31,6 +31,7 @@ metadata:
     app.kubernetes.io/component: om
 spec:
   replicas: {{ .Values.om.replicas }}
+  podManagementPolicy: Parallel
   serviceName: {{ .Release.Name }}-om-headless
   selector:
     matchLabels:

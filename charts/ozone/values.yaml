@@ -19,6 +19,8 @@ image:
   pullPolicy: IfNotPresent
   tag: ~
 
+namespace: default
+
 imagePullSecrets: []
 
 # Common environment variables (templated)
@@ -123,6 +125,7 @@ om:
     type: ClusterIP
     port: 9874
     nodePort: ~
+    ratisPort: 9894
   # Ozone Manager persistence
   persistence:
     # Enable persistence
@@ -201,6 +204,7 @@ scm:
     type: ClusterIP
     port: 9876
     nodePort: ~
+    ratisPort: 9894
   # Storage Container Manager persistence
   persistence:
     # Enable persistence

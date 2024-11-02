@@ -51,6 +51,26 @@ app.kubernetes.io/instance: {{ .Release.Name }}
   {{- $pods | join "," }}
 {{- end }}
 
+{{/* List of comma separated om ids */}}
+{{- define "ozone.om.cluster.ids" -}}
+  {{- $pods := list }}
+  {{- $replicas := .Values.om.replicas | int }}
+  {{- range $i := until $replicas }}
+    {{- $pods = append $pods (printf "ozone-om-%d" $i) }}
+  {{- end }}
+  {{- $pods | join "," }}
+{{- end }}
+
+{{/* List of comma separated om ids */}}
+{{- define "ozone.scm.cluster.ids" -}}
+  {{- $pods := list }}
+  {{- $replicas := .Values.scm.replicas | int }}
+  {{- range $i := until $replicas }}
+    {{- $pods = append $pods (printf "ozone-scm-%d" $i) }}
+  {{- end }}
+  {{- $pods | join "," }}
+{{- end }}
+
 {{/* Common configuration environment variables */}}
 {{- define "ozone.configuration.env" -}}
 - name: OZONE-SITE.XML_hdds.datanode.dir
@@ -59,14 +79,42 @@ app.kubernetes.io/instance: {{ .Release.Name }}
   value: /data
 - name: OZONE-SITE.XML_ozone.metadata.dirs
   value: /data/metadata
+{{- if gt (int .Values.scm.replicas) 1 }}
+- name: OZONE-SITE.XML_ozone.scm.ratis.enable
+  value: "true"
+- name: OZONE-SITE.XML_ozone.scm.service.ids
+  value: cluster1
+- name: OZONE-SITE.XML_ozone.scm.nodes.cluster1
+  value: {{ include "ozone.scm.cluster.ids" . }}
+{{- range $i, $val := until ( .Values.scm.replicas | int ) }}
+- name: {{ printf "OZONE-SITE.XML_ozone.scm.address.cluster1.ozone-scm-%d" $i }}
+  value: {{ printf "%s-scm-%d.%s-scm-headless.%s.svc.cluster.local" $.Release.Name $i $.Release.Name $.Values.namespace }}
+{{- end }}
+- name: OZONE-SITE.XML_ozone.scm.primordial.node.id
+  value: "ozone-scm-0"
+{{- else }}
 - name: OZONE-SITE.XML_ozone.scm.block.client.address
   value: {{ include "ozone.scm.pods" . }}
 - name: OZONE-SITE.XML_ozone.scm.client.address
   value: {{ include "ozone.scm.pods" . }}
 - name: OZONE-SITE.XML_ozone.scm.names
   value: {{ include "ozone.scm.pods" . }}
+{{- end}}
+{{- if gt (int .Values.om.replicas) 1 }}
+- name: OZONE-SITE.XML_ozone.om.ratis.enable
+  value: "true"
+- name: OZONE-SITE.XML_ozone.om.service.ids
+  value: cluster1
+- name: OZONE-SITE.XML_ozone.om.nodes.cluster1
+  value: {{ include "ozone.om.cluster.ids" . }}
+{{- range $i, $val := until ( .Values.om.replicas | int ) }}
+- name: {{ printf "OZONE-SITE.XML_ozone.om.address.cluster1.ozone-om-%d" $i }}
+  value: {{ printf "%s-om-%d.%s-om-headless.%s.svc.cluster.local" $.Release.Name $i $.Release.Name $.Values.namespace }}
+{{- end }}
+{{- else }}
 - name: OZONE-SITE.XML_ozone.om.address
   value: {{ include "ozone.om.pods" . }}
+{{- end}}
 - name: OZONE-SITE.XML_hdds.scm.safemode.min.datanode
   value: "3"
 - name: OZONE-SITE.XML_ozone.datanode.pipeline.limit

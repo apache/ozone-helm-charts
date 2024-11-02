@@ -28,6 +28,10 @@ spec:
   ports:
     - name: ui
       port: {{ .Values.scm.service.port }}
+    {{- if gt (int .Values.scm.replicas) 1 }}
+    - name: ratis
+      port: {{ .Values.om.service.ratisPort }}
+    {{- end }}
   selector:
     {{- include "ozone.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: scm
