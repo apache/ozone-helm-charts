@@ -88,7 +88,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
   value: {{ include "ozone.scm.cluster.ids" . }}
 {{- range $i, $val := until ( .Values.scm.replicas | int ) }}
 - name: {{ printf "OZONE-SITE.XML_ozone.scm.address.cluster1.ozone-scm-%d" $i }}
-  value: {{ printf "%s-scm-%d.%s-scm-headless.%s.svc.cluster.local" $.Release.Name $i $.Release.Name $.Values.namespace }}
+  value: {{ printf "%s-scm-%d.%s-scm-headless.%s.svc.cluster.local" $.Release.Name $i $.Release.Name $.Release.Namespace }}
 {{- end }}
 - name: OZONE-SITE.XML_ozone.scm.primordial.node.id
   value: "ozone-scm-0"
@@ -109,7 +109,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
   value: {{ include "ozone.om.cluster.ids" . }}
 {{- range $i, $val := until ( .Values.om.replicas | int ) }}
 - name: {{ printf "OZONE-SITE.XML_ozone.om.address.cluster1.ozone-om-%d" $i }}
-  value: {{ printf "%s-om-%d.%s-om-headless.%s.svc.cluster.local" $.Release.Name $i $.Release.Name $.Values.namespace }}
+  value: {{ printf "%s-om-%d.%s-om-headless.%s.svc.cluster.local" $.Release.Name $i $.Release.Name $.Release.Namespace }}
 {{- end }}
 {{- else }}
 - name: OZONE-SITE.XML_ozone.om.address

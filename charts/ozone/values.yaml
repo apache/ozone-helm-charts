@@ -19,8 +19,6 @@ image:
   pullPolicy: IfNotPresent
   tag: ~
 
-namespace: default
-
 imagePullSecrets: []
 
 # Common environment variables (templated)
