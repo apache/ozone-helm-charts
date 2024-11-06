@@ -30,7 +30,7 @@ spec:
       port: {{ .Values.om.service.port }}
     {{- if gt (int .Values.om.replicas) 1 }}
     - name: ratis
-      port: {{ .Values.om.service.ratisPort }}
+      port: 9872
     {{- end }}
   selector:
     {{- include "ozone.selectorLabels" . | nindent 4 }}

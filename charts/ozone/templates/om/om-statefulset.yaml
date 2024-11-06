@@ -72,6 +72,10 @@ spec:
               containerPort: 9862
             - name: ui
               containerPort: {{ .Values.om.service.port }}
+            {{- if gt (int .Values.om.replicas) 1 }}
+            - name: ratis
+              containerPort: 9872
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /

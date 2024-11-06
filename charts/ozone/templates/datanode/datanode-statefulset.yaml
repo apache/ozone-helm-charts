@@ -65,6 +65,10 @@ spec:
           ports:
             - name: ui
               containerPort: {{ .Values.datanode.service.port }}
+            - name: ratis-ipc
+              containerPort: 9858
+            - name: ipc
+              containerPort: 9859
           livenessProbe:
             httpGet:
               path: /

@@ -101,10 +101,18 @@ spec:
           ports:
             - name: rpc-client
               containerPort: 9860
+            - name: block-client
+              containerPort: 9863
             - name: rpc-datanode
               containerPort: 9861
             - name: ui
               containerPort: {{ .Values.scm.service.port }}
+            {{- if gt (int .Values.scm.replicas) 1 }}
+            - name: ratis
+              containerPort: 9894
+            - name: grpc
+              containerPort: 9895
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /
