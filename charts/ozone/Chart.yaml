@@ -19,7 +19,7 @@ name: ozone
 description: The official Helm chart for Apache Ozone
 type: application
 version: 0.1.1
-appVersion: "1.4.0"
+appVersion: "1.4.1-rocky"
 home: https://ozone.apache.org
 icon: https://ozone.apache.org/ozone-logo.png
 sources:
