@@ -28,10 +28,8 @@ spec:
   ports:
     - name: ui
       port: {{ .Values.om.service.port }}
-    {{- if gt (int .Values.om.replicas) 1 }}
     - name: ratis
       port: 9872
-    {{- end }}
   selector:
     {{- include "ozone.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: om
