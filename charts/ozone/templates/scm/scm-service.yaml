@@ -23,6 +23,12 @@ metadata:
   labels:
     {{- include "ozone.labels" . | nindent 4 }}
     app.kubernetes.io/component: scm
+    {{- with .Values.scm.service.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.scm.service.annotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   type: {{ .Values.scm.service.type }}
   ports:

@@ -84,6 +84,8 @@ datanode:
     type: ClusterIP
     port: 9882
     nodePort: ~
+    labels: {}
+    annotations: {}
   # Datanode persistence
   persistence:
     # Enable persistence
@@ -123,6 +125,8 @@ om:
     type: ClusterIP
     port: 9874
     nodePort: ~
+    labels: {}
+    annotations: {}
   # Ozone Manager persistence
   persistence:
     # Enable persistence
@@ -162,6 +166,8 @@ s3g:
     type: ClusterIP
     port: 9878
     nodePort: ~
+    labels: {}
+    annotations: {}
   # S3 Gateway persistence
   persistence:
     # Enable persistence
@@ -201,6 +207,8 @@ scm:
     type: ClusterIP
     port: 9876
     nodePort: ~
+    labels: {}
+    annotations: {}
   # Storage Container Manager persistence
   persistence:
     # Enable persistence

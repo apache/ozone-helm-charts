@@ -23,6 +23,12 @@ metadata:
   labels:
     {{- include "ozone.labels" . | nindent 4 }}
     app.kubernetes.io/component: s3g
+    {{- with .Values.s3g.service.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.s3g.service.annotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   type: {{ .Values.s3g.service.type }}
   ports:
