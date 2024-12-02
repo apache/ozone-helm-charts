@@ -1,6 +1,9 @@
 name: Test Charts
 
-on: pull_request
+on:
+  pull_request:
+    types: [opened, synchronize]
+  push:
 
 jobs:
   test:
@@ -24,22 +27,27 @@ jobs:
       - name: Set up chart-testing
         uses: ./.github/actions/chart-testing-action
 
-      - name: Run chart-testing (list-changed)
-        id: list-changed
+      - name: Find changes (PR)
+        if: github.event_name == 'pull_request'
         run: |
           changed=$(ct list-changed --target-branch ${{ github.base_ref }})
           if [[ -n "$changed" ]]; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "test_scope=--target-branch ${{ github.base_ref }}" >> "$GITHUB_ENV"
           fi
 
+      - name: Find changes (push)
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "test_scope=--all" >> "$GITHUB_ENV"
+
       - name: Run chart-testing (lint)
-        if: steps.list-changed.outputs.changed == 'true'
-        run: ct lint --target-branch ${{ github.base_ref }} --validate-maintainers=false --check-version-increment=false
+        if: env.test_scope != ''
+        run: ct lint ${{ env.test_scope }} --validate-maintainers=false --check-version-increment=false
 
       - name: Create kind cluster
-        if: steps.list-changed.outputs.changed == 'true'
+        if: env.test_scope != ''
         uses: ./.github/actions/kind-action
 
       - name: Run chart-testing (install)
-        if: steps.list-changed.outputs.changed == 'true'
-        run: ct install --target-branch ${{ github.base_ref }}
+        if: env.test_scope != ''
+        run: ct install ${{ env.test_scope }}
