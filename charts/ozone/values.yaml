@@ -237,12 +237,5 @@ helm:
   # Helm Manager persistence (this is enabled automatically if al least one
   # of datanode, scm or om is enabled)
   persistence:
-    # Persistence access modes
-    accessModes:
-      - ReadWriteOnce
     # Path for Helm Manager volume mount
     path: /metadata/helm
-    # Volume size
-    size: 5Mi
-    # The name of a specific storage class name to use
-    storageClassName: ~
