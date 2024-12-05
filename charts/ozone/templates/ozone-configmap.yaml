@@ -21,5 +21,9 @@ kind: ConfigMap
 metadata:
   name: {{ .Release.Name }}-ozone
   labels: {{- include "ozone.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-upgrade, post-install
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/resource-policy": keep
 data:
   {{- tpl (toYaml .Values.configuration.files) $ | nindent 4 }}
