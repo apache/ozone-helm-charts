@@ -91,6 +91,9 @@ spec:
               path: /
               port: ui
             initialDelaySeconds: 30
+          {{- with .Values.scm.resources }}
+          resources: {{- toYaml . | nindent 12 }}
+          {{- end }}
           volumeMounts:
             - name: config
               mountPath: {{ .Values.configuration.dir }}
