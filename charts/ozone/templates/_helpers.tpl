@@ -51,6 +51,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
   {{- $pods | join "," }}
 {{- end }}
 
+{{/* Recon pod name */}}
+{{- define "ozone.recon.pod" -}}
+  {{- printf "%s-recon-%d.%s-recon" $.Release.Name 0 $.Release.Name }}
+{{- end }}
+
 {{/* Common configuration environment variables */}}
 {{- define "ozone.configuration.env" -}}
 - name: OZONE-SITE.XML_hdds.datanode.dir
@@ -73,4 +78,8 @@ app.kubernetes.io/instance: {{ .Release.Name }}
   value: "1"
 - name: OZONE-SITE.XML_dfs.datanode.use.datanode.hostname
   value: "true"
+{{- if .Values.recon.enabled }}
+- name: OZONE-SITE.XML_ozone.recon.address
+  value: {{ include "ozone.recon.pod" . }}
+{{- end }}
 {{- end }}

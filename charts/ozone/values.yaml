@@ -230,3 +230,30 @@ scm:
     size: 10Gi
     # The name of a specific storage class name to use
     storageClassName: ~
+
+# Recon configuration
+recon:
+  enabled: false
+  # Command to launch Recon (templated)
+  command: ~
+  # Arguments to launch Recon (templated)
+  args: ["ozone", "recon"]
+  # Additional Recon environment variables (templated)
+  env: []
+  # Additional Recon envFrom items to set up environment variables (templated)
+  envFrom: []
+  # Constrain Recon pods to nodes with specific node labels
+  nodeSelector: {}
+  # Constrain Recon pods to nodes by affinity/anti-affinity rules
+  affinity: {}
+  # Allow to schedule Recon pods on nodes with matching taints
+  tolerations: []
+  # Recon security context (overwrites common security context)
+  securityContext: {}
+  # Recon service configuration
+  service:
+    type: ClusterIP
+    port: 9888
+    nodePort: ~
+    labels: {}
+    annotations: {}
