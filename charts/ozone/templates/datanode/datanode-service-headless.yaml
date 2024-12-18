@@ -28,6 +28,10 @@ spec:
   ports:
     - name: ui
       port: {{ .Values.datanode.service.port }}
+    - name: ratis-ipc
+      port: 9858
+    - name: ipc
+      port: 9859
   selector:
     {{- include "ozone.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: datanode
