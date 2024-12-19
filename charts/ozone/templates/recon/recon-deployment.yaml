@@ -1,0 +1,100 @@
+{{/*
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/}}
+
+{{- if .Values.recon.enabled }}
+{{- $env := concat .Values.env .Values.recon.env }}
+{{- $envFrom := concat .Values.envFrom .Values.recon.envFrom }}
+{{- $nodeSelector := or .Values.recon.nodeSelector .Values.nodeSelector }}
+{{- $affinity := or .Values.recon.affinity .Values.affinity }}
+{{- $tolerations := or .Values.recon.tolerations .Values.tolerations }}
+{{- $securityContext := or .Values.recon.securityContext .Values.securityContext }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-recon
+  labels:
+    {{- include "ozone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: recon
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "ozone.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: recon
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/ozone-configmap.yaml") . | sha256sum }}
+      labels:
+        {{- include "ozone.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: recon
+    spec:
+      containers:
+        - name: recon
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.recon.command }}
+          command: {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          {{- with .Values.recon.args }}
+          args: {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          env:
+            {{- include "ozone.configuration.env" . | nindent 12 }}
+            {{- with $env }}
+              {{- tpl (toYaml .) $ | nindent 12 }}
+            {{- end }}
+          {{- with $envFrom }}
+          envFrom: {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: ui
+              containerPort: {{ .Values.recon.service.port }}
+          livenessProbe:
+            tcpSocket:
+              port: 9891
+            initialDelaySeconds: 30
+          readinessProbe:
+            tcpSocket:
+              port: 9891
+            initialDelaySeconds: 30
+          volumeMounts:
+            - name: config
+              mountPath: {{ .Values.configuration.dir }}
+      {{- with $nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $affinity }}
+      affinity: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $securityContext }}
+      securityContext: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: config
+          projected:
+            sources:
+              - configMap:
+                  name: {{ .Release.Name }}-ozone
+              {{- with .Values.configuration.filesFrom }}
+                {{- tpl (toYaml .) $ | nindent 14 }}
+              {{- end }}
+{{- end }}
