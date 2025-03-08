@@ -45,3 +45,10 @@ Datanode
 S3 Gateway
  To access S3 Gateway from a local environment, use the following command and specify localhost:{{ .Values.s3g.service.port }} as S3 endpoint
  $ kubectl port-forward svc/{{ .Release.Name }}-s3g {{ .Values.s3g.service.port }}:{{ .Values.s3g.service.port }}
+
+{{- if .Values.recon.enabled }}
+
+Recon
+ To access Recon from a local environment, use the following command and specify localhost:{{ .Values.recon.service.port }} as Recon endpoint
+ $ kubectl port-forward svc/{{ .Release.Name }}-recon {{ .Values.recon.service.port }}:{{ .Values.recon.service.port }}
+{{- end }}
