@@ -230,3 +230,28 @@ scm:
     size: 10Gi
     # The name of a specific storage class name to use
     storageClassName: ~
+
+# Helm Manager configuration
+helm:
+  # Additional Helm Manager environment variables (templated)
+  env: []
+  # Additional Helm Manager envFrom items to set up environment variables (templated)
+  envFrom: []
+  # Constrain Helm Manager pods to nodes with specific node labels
+  nodeSelector: {}
+  # Constrain Helm Manager pods to nodes by affinity/anti-affinity rules
+  affinity: {}
+  # Allow to schedule Helm Manager pods on nodes with matching taints
+  tolerations: []
+  # Helm Manager security context (overwrites common security context)
+  securityContext: {}
+  # Decommissioning is handled with a post-upgrade helm hook job.
+  # To avoid endless retries of decommissioning, this limit is set.
+  # This can happen if PVC has been deleted or is not reachable.
+  # This is used for decommissioning OM
+  backoffLimit: 5
+  # Helm Manager persistence (this is enabled automatically if al least one
+  # of datanode, scm or om is enabled)
+  persistence:
+    # Path for Helm Manager volume mount
+    path: /metadata/helm

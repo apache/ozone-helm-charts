@@ -1,0 +1,239 @@
+{{- if or .Values.om.persistence.enabled }}
+{{- $dnodes := ternary (splitList "," (include "ozone.om.decommissioned.nodes" .)) (list) (ne "" (include "ozone.om.decommissioned.nodes" .)) }}
+{{- $env := concat .Values.env .Values.helm.env }}
+{{- $envFrom := concat .Values.envFrom .Values.helm.envFrom }}
+{{- $nodeSelector := or .Values.helm.nodeSelector .Values.nodeSelector }}
+{{- $affinity := or .Values.helm.affinity .Values.affinity }}
+{{- $tolerations := or .Values.helm.tolerations .Values.tolerations }}
+{{- $securityContext := or .Values.helm.securityContext .Values.securityContext }}
+{{- if and (gt (len $dnodes) 0) ( .Values.om.persistence.enabled) }}
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ printf "%s-helm-manager-leader-transfer" $.Release.Name }}
+  labels:
+    {{- include "ozone.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: helm-manager
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": hook-succeeded, hook-failed
+spec:
+  backoffLimit: {{ $.Values.helm.backoffLimit }}
+  template:
+    metadata:
+      labels:
+        {{- include "ozone.selectorLabels" $ | nindent 8 }}
+        app.kubernetes.io/component: helm-manager
+    spec:
+      containers:
+        - name: om-leader-transfer
+          image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag | default $.Chart.AppVersion }}"
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          {{- with $.Values.om.command }}
+          command: {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          args:
+            - sh
+            - -c
+            - |
+              set -e
+              exec ozone admin om transfer -id=cluster1 -n={{ $.Release.Name }}-om-0
+          env:
+            {{- include "ozone.configuration.env.prehook" $ | nindent 12 }}
+            {{- with $env }}
+              {{- tpl (toYaml .) $ | nindent 12 }}
+            {{- end }}
+          {{- with $envFrom }}
+          envFrom: {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: data-ratis-ipc
+              containerPort: 9858
+            - name: data-ipc
+              containerPort: 9859
+            - name: scm-rpc-client
+              containerPort: 9860
+            - name: scm-block-cl
+              containerPort: 9863
+            - name: scm-rpc-data
+              containerPort: 9861
+            - name: scm-ratis
+              containerPort: 9894
+            - name: scm-grpc
+              containerPort: 9895
+            - name: om-rpc
+              containerPort: 9862
+            - name: om-ratis
+              containerPort: 9872
+          volumeMounts:
+            - name: config
+              mountPath: {{ $.Values.configuration.dir }}
+            - name: om-data
+              mountPath: {{ $.Values.om.persistence.path }}
+      {{- with $nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $affinity }}
+      affinity: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $securityContext }}
+      securityContext: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: om-data
+          emptyDir: { }
+        - name: config
+          projected:
+            sources:
+              - configMap:
+                  name: {{ $.Release.Name }}-ozone
+              {{- with $.Values.configuration.filesFrom }}
+                {{- tpl (toYaml .) $ | nindent 14 }}
+              {{- end }}
+      restartPolicy: Never
+
+{{- range $dnode := $dnodes }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ printf "%s-helm-manager-decommission-%s" $.Release.Name $dnode }}
+  labels:
+    {{- include "ozone.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: helm-manager
+  annotations:
+    "helm.sh/hook": post-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": hook-succeeded, hook-failed
+spec:
+  backoffLimit: {{ $.Values.helm.backoffLimit }}
+  template:
+    metadata:
+      labels:
+        {{- include "ozone.selectorLabels" $ | nindent 8 }}
+        app.kubernetes.io/component: helm-manager
+    spec:
+      containers:
+        - name: om-decommission
+          image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag | default $.Chart.AppVersion }}"
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          {{- with $.Values.om.command }}
+          command: {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          args:
+            - sh
+            - -c
+            - |
+              set -e
+              decommission_finalizer() {
+                  echo "Init decommission finalizer process..."
+                  while true; do
+                    IFS= read -r line;
+                    echo "$line"
+                    if echo "$line" | grep -q "Successfully decommissioned OM {{ $dnode }}"; then
+                      echo "{{ $dnode }} was successfully decommissioned!"
+                      if [ -d /old{{ $.Values.om.persistence.path }} ]; then
+                        echo "Delete old data on pvc to enable rescheduling without manual PVC deletion!"
+                        rm -rf  /old{{ $.Values.om.persistence.path }}/*
+                        echo "Data deleted!"
+                      fi
+                      break;
+                    fi
+                  done
+                  echo "Decommission finalizer process finished!"
+                  exit 0
+              }
+              exec ozone admin om decommission -id=cluster1 -nodeid={{ $dnode }} -hostname={{ printf "%s-helm-manager-decommission-%s-svc.%s.svc.cluster.local" $.Release.Name $dnode $.Release.Namespace }} | decommission_finalizer
+          env:
+            {{- include "ozone.configuration.env" $ | nindent 12 }}
+            {{- with $env }}
+              {{- tpl (toYaml .) $ | nindent 12 }}
+            {{- end }}
+          {{- with $envFrom }}
+          envFrom: {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: data-ratis-ipc
+              containerPort: 9858
+            - name: data-ipc
+              containerPort: 9859
+            - name: scm-rpc-client
+              containerPort: 9860
+            - name: scm-block-cl
+              containerPort: 9863
+            - name: scm-rpc-data
+              containerPort: 9861
+            - name: scm-ratis
+              containerPort: 9894
+            - name: scm-grpc
+              containerPort: 9895
+            - name: om-rpc
+              containerPort: 9862
+            - name: om-ratis
+              containerPort: 9872
+          volumeMounts:
+            - name: config
+              mountPath: {{ $.Values.configuration.dir }}
+            - name: om-data
+              mountPath: {{ $.Values.om.persistence.path }}
+            - name: om-data-old
+              mountPath: /old{{ $.Values.om.persistence.path }}
+      {{- with $nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $affinity }}
+      affinity: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $securityContext }}
+      securityContext: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: om-data-old
+          persistentVolumeClaim:
+            claimName: {{ $.Release.Name}}-om-{{ $dnode }}
+        - name: om-data
+          emptyDir: { }
+        - name: config
+          projected:
+            sources:
+              - configMap:
+                  name: {{ $.Release.Name }}-ozone
+              {{- with $.Values.configuration.filesFrom }}
+                {{- tpl (toYaml .) $ | nindent 14 }}
+              {{- end }}
+      restartPolicy: Never
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ printf "%s-helm-manager-decommission-%s-svc" $.Release.Name $dnode }}
+  labels:
+    {{- include "ozone.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: helm-manager
+  annotations:
+    "helm.sh/hook": post-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": hook-succeeded, hook-failed
+spec:
+  selector:
+    job-name: {{ printf "%s-helm-manager-decommission-%s" $.Release.Name $dnode }}
+  ports:
+    - name: rpc
+      port: 9862
+      targetPort: 9862
+    - name: ratis
+      port: 9872
+      targetPort: 9872
+  type: ClusterIP
+{{- end }}
+{{- end }}
+{{- end }}
