@@ -64,11 +64,13 @@ spec:
           {{- end }}
           ports:
             - name: rest
-              containerPort: {{ .Values.s3g.service.port }}
+              containerPort: {{ .Values.s3g.service.rest.port }}
+            - name: web
+              containerPort: {{ .Values.s3g.service.web.port }}
           livenessProbe:
             httpGet:
               path: /
-              port: rest
+              port: web
             initialDelaySeconds: 30
           {{- with .Values.s3g.resources }}
           resources: {{- toYaml . | nindent 12 }}

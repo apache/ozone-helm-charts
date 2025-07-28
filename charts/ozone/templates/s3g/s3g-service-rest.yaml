@@ -19,23 +19,23 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Release.Name }}-s3g
+  name: {{ .Release.Name }}-s3g-rest
   labels:
     {{- include "ozone.labels" . | nindent 4 }}
     app.kubernetes.io/component: s3g
-    {{- with .Values.s3g.service.labels }}
+    {{- with .Values.s3g.service.rest.labels }}
       {{- toYaml . | nindent 4 }}
     {{- end }}
-  {{- with .Values.s3g.service.annotations }}
+  {{- with .Values.s3g.service.rest.annotations }}
   annotations: {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  type: {{ .Values.s3g.service.type }}
+  type: {{ .Values.s3g.service.rest.type }}
   ports:
     - name: rest
-      port: {{ .Values.s3g.service.port }}
-      {{- if and (eq .Values.s3g.service.type "NodePort") (.Values.s3g.service.nodePort) }}
-      nodePort: {{ .Values.s3g.service.nodePort }}
+      port: {{ .Values.s3g.service.rest.port }}
+      {{- if and (eq .Values.s3g.service.rest.type "NodePort") (.Values.s3g.service.rest.nodePort) }}
+      nodePort: {{ .Values.s3g.service.rest.nodePort }}
       {{- end }}
   selector:
     {{- include "ozone.selectorLabels" . | nindent 4 }}
