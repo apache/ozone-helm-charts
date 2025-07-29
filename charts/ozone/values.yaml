@@ -169,11 +169,18 @@ s3g:
   securityContext: {}
   # S3 Gateway service configuration
   service:
-    type: ClusterIP
-    port: 9878
-    nodePort: ~
-    labels: {}
-    annotations: {}
+    rest:
+      type: ClusterIP
+      port: 9878
+      nodePort: ~
+      labels: {}
+      annotations: {}
+    web:
+      type: ClusterIP
+      port: 19878
+      nodePort: ~
+      labels: {}
+      annotations: {}
   # S3 Gateway persistence
   persistence:
     # Enable persistence

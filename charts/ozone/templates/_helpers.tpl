@@ -56,7 +56,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 - name: OZONE-SITE.XML_hdds.datanode.dir
   value: /data/storage
 - name: OZONE-SITE.XML_ozone.scm.datanode.id.dir
-  value: /data
+  value: /data/metadata
 - name: OZONE-SITE.XML_ozone.metadata.dirs
   value: /data/metadata
 - name: OZONE-SITE.XML_ozone.scm.block.client.address
