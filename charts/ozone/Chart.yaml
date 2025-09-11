@@ -18,8 +18,8 @@ apiVersion: v2
 name: ozone
 description: The official Helm chart for Apache Ozone
 type: application
-version: 0.1.1
-appVersion: "1.4.0"
+version: 0.2.0
+appVersion: "2.0.0"
 home: https://ozone.apache.org
 icon: https://ozone.apache.org/ozone-logo.png
 sources:

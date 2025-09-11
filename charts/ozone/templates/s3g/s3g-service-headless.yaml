@@ -27,7 +27,7 @@ spec:
   clusterIP: None
   ports:
     - name: rest
-      port: {{ .Values.s3g.service.port }}
+      port: {{ .Values.s3g.service.rest.port }}
   selector:
     {{- include "ozone.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: s3g
