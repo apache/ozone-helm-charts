@@ -184,7 +184,7 @@ spec:
         resources:
           requests:
             storage: {{ .Values.om.persistence.size }}
-        {{- with .Values.scm.persistence.storageClassName }}
+        {{- with .Values.om.persistence.storageClassName }}
         storageClassName: {{ . }}
         {{- end }}
   {{- end }}

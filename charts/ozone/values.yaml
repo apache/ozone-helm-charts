@@ -105,7 +105,7 @@ datanode:
 # Ozone Manager configuration
 om:
   # Number of Ozone Manager replicas
-  replicas: 1
+  replicas: 3
   # Command to launch Ozone Manager (templated)
   command: ~
   # Arguments to launch Ozone Manager (templated)
@@ -139,6 +139,49 @@ om:
     accessModes:
       - ReadWriteOnce
     # Path for Ozone Manager volume mount
+    path: /data
+    # Volume size
+    size: 10Gi
+    # The name of a specific storage class name to use
+    storageClassName: ~
+
+# Storage Container Manager configuration
+scm:
+  # Number of Storage Container Manager replicas
+  replicas: 3
+  # Command to launch Storage Container Manager (templated)
+  command: ~
+  # Arguments to launch Storage Container Manager (templated)
+  args: ["ozone", "scm"]
+  # Additional Storage Container Manager environment variables (templated)
+  env: []
+  # Additional Storage Container Manager envFrom items to set up environment variables (templated)
+  envFrom: []
+  # Storage Container Manager resource requests and limits
+  resources: {}
+  # Constrain Storage Container Manager pods to nodes with specific node labels
+  nodeSelector: {}
+  # Constrain Storage Container Manager pods to nodes by affinity/anti-affinity rules
+  affinity: {}
+  # Allow to schedule Storage Container Manager pods on nodes with matching taints
+  tolerations: []
+  # Storage Container Manager security context (overwrites common security context)
+  securityContext: {}
+  # Storage Container Manager service configuration
+  service:
+    type: ClusterIP
+    port: 9876
+    nodePort: ~
+    labels: {}
+    annotations: {}
+  # Storage Container Manager persistence
+  persistence:
+    # Enable persistence
+    enabled: false
+    # Persistence access modes
+    accessModes:
+      - ReadWriteOnce
+    # Path for Storage Container Manager volume mount
     path: /data
     # Volume size
     size: 10Gi
@@ -189,49 +232,6 @@ s3g:
     accessModes:
       - ReadWriteOnce
     # Path for S3 Gateway volume mount
-    path: /data
-    # Volume size
-    size: 10Gi
-    # The name of a specific storage class name to use
-    storageClassName: ~
-
-# Storage Container Manager configuration
-scm:
-  # Number of Storage Container Manager replicas
-  replicas: 1
-  # Command to launch Storage Container Manager (templated)
-  command: ~
-  # Arguments to launch Storage Container Manager (templated)
-  args: ["ozone", "scm"]
-  # Additional Storage Container Manager environment variables (templated)
-  env: []
-  # Additional Storage Container Manager envFrom items to set up environment variables (templated)
-  envFrom: []
-  # Storage Container Manager resource requests and limits
-  resources: {}
-  # Constrain Storage Container Manager pods to nodes with specific node labels
-  nodeSelector: {}
-  # Constrain Storage Container Manager pods to nodes by affinity/anti-affinity rules
-  affinity: {}
-  # Allow to schedule Storage Container Manager pods on nodes with matching taints
-  tolerations: []
-  # Storage Container Manager security context (overwrites common security context)
-  securityContext: {}
-  # Storage Container Manager service configuration
-  service:
-    type: ClusterIP
-    port: 9876
-    nodePort: ~
-    labels: {}
-    annotations: {}
-  # Storage Container Manager persistence
-  persistence:
-    # Enable persistence
-    enabled: false
-    # Persistence access modes
-    accessModes:
-      - ReadWriteOnce
-    # Path for Storage Container Manager volume mount
     path: /data
     # Volume size
     size: 10Gi
