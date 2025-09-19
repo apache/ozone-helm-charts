@@ -22,7 +22,7 @@ metadata:
   name: {{ .Release.Name }}-ozone
   labels: {{- include "ozone.labels" . | nindent 4 }}
   annotations:
-    "helm.sh/hook": pre-upgrade, post-install
+    "helm.sh/hook": pre-upgrade, pre-install
     "helm.sh/hook-weight": "-10"
     "helm.sh/resource-policy": keep
 data:
