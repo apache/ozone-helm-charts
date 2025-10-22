@@ -104,7 +104,7 @@ spec:
                   echo "$HOSTNAME must be started with bootstrap arg!"
                   overwriteCmd="$(joinArr "${nodesConfigOverwriteList[@]}")"
                   echo "Bootstrapping node config for this node: $overwriteCmd"
-                  exec {{ printf "%s --set ozone.om.nodes.cluster1=" $flattenedArgs }}"$overwriteCmd" --bootstrap | bootstrap_finalizer
+                  exec {{ printf "%s --set ozone.om.nodes.%s=" $flattenedArgs $.Values.clusterId }}"$overwriteCmd" --bootstrap | bootstrap_finalizer
                 else
                   echo "$HOSTNAME must not be started with bootstrap arg!"
                   exec {{ join " " $.Values.om.args }}

@@ -39,7 +39,7 @@ spec:
             - -c
             - |
               set -e
-              exec ozone admin om transfer -id=cluster1 -n={{ $.Release.Name }}-om-0
+              exec ozone admin om transfer -id={{ $.Values.clusterId }} -n={{ $.Release.Name }}-om-0
           env:
             {{- include "ozone.configuration.env.prehook" $ | nindent 12 }}
             {{- with $env }}

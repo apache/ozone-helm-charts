@@ -58,7 +58,7 @@ spec:
                   echo "Decommission finalizer process finished!"
                   exit 0
               }
-              exec ozone admin om decommission -id=cluster1 -nodeid={{ $dnode }} -hostname={{ printf "%s-helm-manager-decommission-%s-svc.%s.svc.cluster.local" $.Release.Name $dnode $.Release.Namespace }} | decommission_finalizer
+              exec ozone admin om decommission -id={{ $.Values.clusterId }} -nodeid={{ $dnode }} -hostname={{ printf "%s-helm-manager-decommission-%s-svc.%s.svc.cluster.local" $.Release.Name $dnode $.Release.Namespace }} | decommission_finalizer
           env:
             {{- include "ozone.configuration.env" $ | nindent 12 }}
             {{- with $env }}

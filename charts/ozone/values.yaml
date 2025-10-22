@@ -21,6 +21,9 @@ image:
 
 imagePullSecrets: []
 
+# Cluster ID
+clusterId: cluster1
+
 # Common environment variables (templated)
 env: []
 # Common envFrom items to set up environment variables (templated)
@@ -85,6 +88,8 @@ datanode:
   service:
     type: ClusterIP
     port: 9882
+    ratisIpcPort: 9858
+    ipcPort: 9859
     nodePort: ~
     labels: {}
     annotations: {}
@@ -119,7 +124,18 @@ om:
   # Constrain Ozone Manager pods to nodes with specific node labels
   nodeSelector: {}
   # Constrain Ozone Manager pods to nodes by affinity/anti-affinity rules
-  affinity: {}
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/component
+                  operator: In
+                  values:
+                    - scm
+            topologyKey: kubernetes.io/hostname
   # Allow to schedule Ozone Manager pods on nodes with matching taints
   tolerations: []
   # Ozone Manager security context (overwrites common security context)
@@ -162,7 +178,18 @@ scm:
   # Constrain Storage Container Manager pods to nodes with specific node labels
   nodeSelector: {}
   # Constrain Storage Container Manager pods to nodes by affinity/anti-affinity rules
-  affinity: {}
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/component
+                  operator: In
+                  values:
+                    - om
+            topologyKey: kubernetes.io/hostname
   # Allow to schedule Storage Container Manager pods on nodes with matching taints
   tolerations: []
   # Storage Container Manager security context (overwrites common security context)

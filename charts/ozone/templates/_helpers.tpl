@@ -146,13 +146,13 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 - name: OZONE-SITE.XML_ozone.scm.ratis.enable
   value: "true"
 - name: OZONE-SITE.XML_ozone.scm.service.ids
-  value: cluster1
-- name: OZONE-SITE.XML_ozone.scm.nodes.cluster1
+  value: {{ .Values.clusterId }}
+- name: OZONE-SITE.XML_ozone.scm.nodes.{{ .Values.clusterId }}
   value: {{ include "ozone.scm.cluster.ids" . }}
   {{/*- name: OZONE-SITE.XML_ozone.scm.skip.bootstrap.validation*/}}
   {{/*  value: {{ quote .Values.scm.skipBootstrapValidation }}*/}}
 {{- range $i, $val := until ( .Values.scm.replicas | int ) }}
-- name: {{ printf "OZONE-SITE.XML_ozone.scm.address.cluster1.%s-scm-%d" $.Release.Name $i }}
+- name: {{ printf "OZONE-SITE.XML_ozone.scm.address.%s.%s-scm-%d" $.Values.clusterId $.Release.Name $i }}
   value: {{ printf "%s-scm-%d.%s-scm-headless.%s.svc.cluster.local" $.Release.Name $i $.Release.Name $.Release.Namespace }}
 {{- end }}
 - name: OZONE-SITE.XML_ozone.scm.primordial.node.id
@@ -160,7 +160,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 - name: OZONE-SITE.XML_ozone.om.ratis.enable
   value: "true"
 - name: OZONE-SITE.XML_ozone.om.service.ids
-  value: cluster1
+  value: {{ .Values.clusterId }}
 - name: OZONE-SITE.XML_hdds.scm.safemode.min.datanode
   value: "3"
 - name: OZONE-SITE.XML_ozone.datanode.pipeline.limit
@@ -177,20 +177,20 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{ include "ozone.configuration.env.common" . }}
 {{- if gt (len $dOmNodes) 0 }}
 {{- $decomIds := $dOmNodes | join "," }}
-- name: OZONE-SITE.XML_ozone.om.decommissioned.nodes.cluster1
+- name: OZONE-SITE.XML_ozone.om.decommissioned.nodes.{{ .Values.clusterId }}
   value: {{ $decomIds }}
 {{- else}}
-- name: OZONE-SITE.XML_ozone.om.decommissioned.nodes.cluster1
+- name: OZONE-SITE.XML_ozone.om.decommissioned.nodes.{{ .Values.clusterId }}
   value: ""
 {{- end }}
-- name: OZONE-SITE.XML_ozone.om.nodes.cluster1
+- name: OZONE-SITE.XML_ozone.om.nodes.{{ .Values.clusterId }}
   value: {{ $activeOmNodes | join "," }}
 {{- range $tempId := $activeOmNodes }}
-- name: {{ printf "OZONE-SITE.XML_ozone.om.address.cluster1.%s" $tempId }}
+- name: {{ printf "OZONE-SITE.XML_ozone.om.address.%s.%s" $.Values.clusterId $tempId }}
   value: {{ printf "%s.%s-om-headless.%s.svc.cluster.local" $tempId $.Release.Name $.Release.Namespace }}
 {{- end }}
 {{- range $tempId := $dOmNodes }}
-- name: {{ printf "OZONE-SITE.XML_ozone.om.address.cluster1.%s" $tempId }}
+- name: {{ printf "OZONE-SITE.XML_ozone.om.address.%s.%s" $.Values.clusterId $tempId }}
   value: {{ printf "%s-helm-manager-decommission-%s-svc.%s.svc.cluster.local" $.Release.Name $tempId $.Release.Namespace }}
 {{- end }}
 {{- end }}
@@ -202,15 +202,15 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- $activeOmNodes := ternary (splitList "," (include "ozone.om.cluster.ids" .)) (list) (ne "" (include "ozone.om.cluster.ids" .)) }}
 {{- $allOmNodes := concat $activeOmNodes $dOmNodes }}
 {{ include "ozone.configuration.env.common" . }}
-- name: OZONE-SITE.XML_ozone.om.decommissioned.nodes.cluster1
+- name: OZONE-SITE.XML_ozone.om.decommissioned.nodes.{{ .Values.clusterId }}
   value: ""
 {{- range $tempId := $allOmNodes }}
-- name: {{ printf "OZONE-SITE.XML_ozone.om.address.cluster1.%s" $tempId }}
+- name: {{ printf "OZONE-SITE.XML_ozone.om.address.%s.%s" $.Values.clusterId $tempId }}
   value: {{ printf "%s.%s-om-headless.%s.svc.cluster.local" $tempId $.Release.Name $.Release.Namespace }}
 {{- end }}
 {{ $allOmNodes = append $allOmNodes "om-leader-transfer"}}
-- name: OZONE-SITE.XML_ozone.om.nodes.cluster1
+- name: OZONE-SITE.XML_ozone.om.nodes.{{ .Values.clusterId }}
   value: {{ $allOmNodes | join "," }}
-- name: "OZONE-SITE.XML_ozone.om.address.cluster1.om-leader-transfer"
+- name: "OZONE-SITE.XML_ozone.om.address.{{ .Values.clusterId }}.om-leader-transfer"
   value: localhost
 {{- end }}
