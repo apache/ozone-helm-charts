@@ -1,0 +1,30 @@
+{{- if .Values.om.persistence.enabled }}
+{{- $dnodes := ternary (splitList "," (include "ozone.om.decommissioned.nodes" .)) (list) (ne "" (include "ozone.om.decommissioned.nodes" .)) }}
+{{- if (gt (len $dnodes) 0) }}
+{{- range $dnode := $dnodes }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ printf "%s-helm-manager-decommission-%s-svc" $.Release.Name $dnode }}
+  labels:
+    {{- include "ozone.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: helm-manager
+  annotations:
+    "helm.sh/hook": post-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": hook-succeeded, hook-failed
+spec:
+  selector:
+    job-name: {{ printf "%s-helm-manager-decommission-%s" $.Release.Name $dnode }}
+  ports:
+    - name: rpc
+      port: 9862
+      targetPort: 9862
+    - name: ratis
+      port: 9872
+      targetPort: 9872
+  type: ClusterIP
+{{- end }}
+{{- end }}
+{{- end }}
