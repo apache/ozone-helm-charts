@@ -144,6 +144,8 @@ om:
   service:
     type: ClusterIP
     port: 9874
+    ratisPort: 9872
+    rpcPort: 9862
     nodePort: ~
     labels: {}
     annotations: {}
@@ -198,6 +200,11 @@ scm:
   service:
     type: ClusterIP
     port: 9876
+    rpcDatanodePort: 9861
+    blockClientPort: 9863
+    rpcClientPort: 9860
+    ratisPort: 9894
+    grpcPort: 9895
     nodePort: ~
     labels: {}
     annotations: {}

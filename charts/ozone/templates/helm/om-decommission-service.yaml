@@ -19,11 +19,11 @@ spec:
     job-name: {{ printf "%s-helm-manager-decommission-%s" $.Release.Name $dnode }}
   ports:
     - name: rpc
-      port: 9862
-      targetPort: 9862
+      port: {{ $.Values.om.service.rpcPort }}
+      targetPort: {{ $.Values.om.service.rpcPort }}
     - name: ratis
-      port: 9872
-      targetPort: 9872
+      port: {{ $.Values.om.service.ratisPort }}
+      targetPort: {{ $.Values.om.service.ratisPort }}
   type: ClusterIP
 {{- end }}
 {{- end }}

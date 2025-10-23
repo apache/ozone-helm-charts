@@ -127,11 +127,11 @@ spec:
           {{- end }}
           ports:
             - name: rpc
-              containerPort: 9862
+              containerPort: {{ .Values.om.service.rpcPort }}
             - name: ui
               containerPort: {{ .Values.om.service.port }}
             - name: ratis
-              containerPort: 9872
+              containerPort: {{ .Values.om.service.ratisPort }}
           livenessProbe:
             httpGet:
               path: /

@@ -50,24 +50,10 @@ spec:
             {{- tpl (toYaml .) $ | nindent 12 }}
           {{- end }}
           ports:
-            - name: data-ratis-ipc
-              containerPort: 9858
-            - name: data-ipc
-              containerPort: 9859
-            - name: scm-rpc-client
-              containerPort: 9860
-            - name: scm-block-cl
-              containerPort: 9863
-            - name: scm-rpc-data
-              containerPort: 9861
-            - name: scm-ratis
-              containerPort: 9894
-            - name: scm-grpc
-              containerPort: 9895
             - name: om-rpc
-              containerPort: 9862
+              containerPort: {{ $.Values.om.service.rpcPort }}
             - name: om-ratis
-              containerPort: 9872
+              containerPort: {{ $.Values.om.service.ratisPort }}
           volumeMounts:
             - name: config
               mountPath: {{ $.Values.configuration.dir }}
@@ -75,12 +61,6 @@ spec:
               mountPath: {{ $.Values.om.persistence.path }}
       {{- with $nodeSelector }}
       nodeSelector: {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with $affinity }}
-      affinity: {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with $tolerations }}
-      tolerations: {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with $securityContext }}
       securityContext: {{- toYaml . | nindent 8 }}

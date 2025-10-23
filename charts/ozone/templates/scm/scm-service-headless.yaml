@@ -29,16 +29,16 @@ spec:
     - name: ui
       port: {{ .Values.scm.service.port }}
     - name: rpc-datanode
-      port: 9861
+      port: {{ .Values.scm.service.rpcDatanodePort }}
     - name: block-client
-      port: 9863
+      port: {{ .Values.scm.service.blockClientPort }}
     - name: rpc-client
-      port: 9860
+      port: {{ .Values.scm.service.rpcClientPort }}
     {{- if gt (int .Values.scm.replicas) 1 }}
     - name: ratis
-      port: 9894
+      port: {{ .Values.scm.service.ratisPort }}
     - name: grpc
-      port: 9895
+      port: {{ .Values.scm.service.grpcPort }}
     {{- end }}
   selector:
     {{- include "ozone.selectorLabels" . | nindent 4 }}
