@@ -30,20 +30,19 @@ data:
       echo "$*"
     }
 
-    bootstrap_finalizer() {
-      echo "Init bootrap finalizer process..."
-      while true; do
-        IFS= read -r line;
-        echo "$line"
-        if echo "$line" | grep -q "Successfully bootstrapped OM $HOSTNAME and joined the Ratis group"; then
-          echo "$HOSTNAME was successfully bootstrapped!"
-          mkdir -p "$HELM_MANAGER_PATH"
-          touch "$HELM_MANAGER_BOOTSTRAPPED_FILE"
-          break;
-        fi
-      done
-      echo "Bootstrap finalizer process finished!"
-      exit 0
+    run_bootstrap() {
+      local overwriteCmd="$1"
+      echo "Bootstrapping node config for this node: $overwriteCmd"
+      
+      if ozone admin om --set "ozone.om.nodes.$OZONE_CLUSTER_ID=$overwriteCmd" --bootstrap; then
+        echo "$HOSTNAME was successfully bootstrapped!"
+        mkdir -p "$HELM_MANAGER_PATH"
+        touch "$HELM_MANAGER_BOOTSTRAPPED_FILE"
+        exit 0
+      else
+        echo "Bootstrap failed with exit code $?"
+        exit 1
+      fi
     }
 
     bootstrapHosts="$OZONE_OM_BOOTSTRAP_NODES"
@@ -71,8 +70,7 @@ data:
     if [ "$doBootstrap" = true ] && [ ! -f "$HELM_MANAGER_BOOTSTRAPPED_FILE" ]; then
       echo "$HOSTNAME must be started with bootstrap arg!"
       overwriteCmd="$(joinArr "${nodesConfigOverwriteList[@]}")"
-      echo "Bootstrapping node config for this node: $overwriteCmd"
-      exec ozone admin om --set "ozone.om.nodes.$OZONE_CLUSTER_ID=$overwriteCmd" --bootstrap | bootstrap_finalizer
+      run_bootstrap "$overwriteCmd"
     else
       echo "$HOSTNAME must not be started with bootstrap arg, or is already bootstrapped."
       exit 0
