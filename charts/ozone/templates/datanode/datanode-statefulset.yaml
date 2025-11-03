@@ -117,7 +117,7 @@ spec:
         resources:
           requests:
             storage: {{ .Values.datanode.persistence.size }}
-        {{- with .Values.scm.persistence.storageClassName }}
+        {{- with .Values.datanode.persistence.storageClassName }}
         storageClassName: {{ . }}
         {{- end }}
   {{- end }}
