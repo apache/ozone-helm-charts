@@ -119,7 +119,7 @@ spec:
         resources:
           requests:
             storage: {{ .Values.s3g.persistence.size }}
-        {{- with .Values.scm.persistence.storageClassName }}
+        {{- with .Values.s3g.persistence.storageClassName }}
         storageClassName: {{ . }}
         {{- end }}
   {{- end }}
