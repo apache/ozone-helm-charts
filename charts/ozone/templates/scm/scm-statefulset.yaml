@@ -31,6 +31,7 @@ metadata:
     app.kubernetes.io/component: scm
 spec:
   replicas: {{ .Values.scm.replicas }}
+  podManagementPolicy: Parallel
   serviceName: {{ .Release.Name }}-scm-headless
   selector:
     matchLabels:
@@ -61,6 +62,24 @@ spec:
               mountPath: {{ .Values.configuration.dir }}
             - name: {{ .Release.Name }}-scm
               mountPath: {{ .Values.scm.persistence.path }}
+        {{- if gt (int .Values.scm.replicas) 1 }}
+        - name: bootstrap
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          args: ["ozone", "scm", "--bootstrap"]
+          env:
+            {{- include "ozone.configuration.env" . | nindent 12 }}
+            {{- with $env }}
+              {{- tpl (toYaml .) $ | nindent 12 }}
+            {{- end }}
+          {{- with $envFrom }}
+          envFrom: {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: {{ .Values.configuration.dir }}
+            - name: {{ .Release.Name }}-scm
+              mountPath: {{ .Values.scm.persistence.path }}
+        {{- end }}
       containers:
         - name: scm
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -82,10 +101,18 @@ spec:
           ports:
             - name: rpc-client
               containerPort: 9860
+            - name: block-client
+              containerPort: 9863
             - name: rpc-datanode
               containerPort: 9861
             - name: ui
               containerPort: {{ .Values.scm.service.port }}
+            {{- if gt (int .Values.scm.replicas) 1 }}
+            - name: ratis
+              containerPort: 9894
+            - name: grpc
+              containerPort: 9895
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /

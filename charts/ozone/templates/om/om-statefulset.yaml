@@ -22,6 +22,8 @@
 {{- $affinity := or .Values.om.affinity .Values.affinity }}
 {{- $tolerations := or .Values.om.tolerations .Values.tolerations }}
 {{- $securityContext := or .Values.om.securityContext .Values.securityContext }}
+{{- $bnodes := ternary (splitList "," (include "ozone.om.bootstrap.nodes" .)) (list) (ne "" (include "ozone.om.bootstrap.nodes" .)) }}
+{{- $activeNodes := ternary (splitList "," (include "ozone.om.cluster.ids" .)) (list) (ne "" (include "ozone.om.cluster.ids" .)) }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -39,7 +41,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/ozone-configmap.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/ozone-configmap.yaml") . | cat (include "ozone.configuration.env" .) | sha256sum }}
       labels:
         {{- include "ozone.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: om
@@ -51,9 +53,66 @@ spec:
           {{- with .Values.om.command }}
           command: {{- tpl (toYaml .) $ | nindent 12 }}
           {{- end }}
-          {{- with .Values.om.args }}
-          args: {{- tpl (toYaml .) $ | nindent 12 }}
-          {{- end }}
+          args:
+            - sh
+            - -c
+            - |
+              set -e
+              HELM_MANAGER_PATH="{{ .Values.om.persistence.path }}{{ .Values.helm.persistence.path }}"
+              HELM_MANAGER_BOOTSTRAPPED_FILE="$HELM_MANAGER_PATH/bootstrapped"
+              {{- $flattenedArgs := join " " $.Values.om.args }}
+              {{- if and (.Values.om.persistence.enabled) (gt (len $bnodes) 0) }}
+                joinArr() {
+                  local IFS=","
+                  echo "$*"
+                }
+                bootstrap_finalizer() {
+                  echo "Init bootrap finalizer process..."
+                  while true; do
+                    IFS= read -r line;
+                    echo "$line"
+                      if echo "$line" | grep -q "Successfully bootstrapped OM $HOSTNAME and joined the Ratis group"; then
+                      echo "$HOSTNAME was successfully bootstrapped!"
+                      mkdir -p "$HELM_MANAGER_PATH"
+                      touch "$HELM_MANAGER_BOOTSTRAPPED_FILE"
+                      break;
+                    fi
+                  done
+                  echo "Bootstrap finalizer process finished!"
+                  exit 0
+                }
+                bootstrapHosts="{{ join "," $bnodes }}"
+                echo "Need to handle bootstrap for nodes $bootstrapHosts"
+                IFS=',' read -r -a hostArray <<< "$bootstrapHosts"
+                doBootstrap=false
+                nodesConfigOverwriteList=()
+                for host in "${hostArray[@]}"; do
+                  if [[ "$host" == "$HOSTNAME" ]]; then
+                    doBootstrap=true
+                    activeNodesConfig="{{ join "," $activeNodes }}"
+                    IFS=',' read -r -a overwriteArray <<< "$activeNodesConfig"
+                    for overwriteHost in "${overwriteArray[@]}"; do
+                      nodesConfigOverwriteList+=("$overwriteHost")
+                      if [[ "$overwriteHost" == "$HOSTNAME" ]]; then
+                        break;
+                      fi
+                    done
+                    break
+                  fi
+                done
+                if [ "$doBootstrap" = true ] && [ ! -f "$HELM_MANAGER_BOOTSTRAPPED_FILE" ]; then
+                  echo "$HOSTNAME must be started with bootstrap arg!"
+                  overwriteCmd="$(joinArr "${nodesConfigOverwriteList[@]}")"
+                  echo "Bootstrapping node config for this node: $overwriteCmd"
+                  exec {{ printf "%s --set ozone.om.nodes.cluster1=" $flattenedArgs }}"$overwriteCmd" --bootstrap | bootstrap_finalizer
+                else
+                  echo "$HOSTNAME must not be started with bootstrap arg!"
+                  exec {{ join " " $.Values.om.args }}
+                fi
+              {{- else }}
+                echo "No bootstrap handling needed!"
+                exec {{ join " " $.Values.om.args }}
+              {{- end }}
           env:
             {{- include "ozone.configuration.env" . | nindent 12 }}
             - name: WAITFOR
@@ -71,6 +130,8 @@ spec:
               containerPort: 9862
             - name: ui
               containerPort: {{ .Values.om.service.port }}
+            - name: ratis
+              containerPort: 9872
           livenessProbe:
             httpGet:
               path: /
@@ -107,7 +168,7 @@ spec:
               {{- end }}
         {{- if not .Values.om.persistence.enabled }}
         - name: {{ .Release.Name }}-om
-          emptyDir: {}
+          emptyDir: { }
         {{- end }}
   {{- if .Values.om.persistence.enabled }}
   volumeClaimTemplates:
