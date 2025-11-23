@@ -41,7 +41,7 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/ozone-configmap.yaml") . | sha256sum }}
         {{- with .Values.om.podAnnotations }}
-        {{- toYaml . | nindent 8 }}
+          {{- toYaml . | nindent 8 }}
         {{- end }}
       labels:
         {{- include "ozone.selectorLabels" . | nindent 8 }}
