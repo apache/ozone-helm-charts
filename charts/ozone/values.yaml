@@ -73,6 +73,8 @@ datanode:
   envFrom: []
   # Datanode resource requests and limits
   resources: {}
+  # Extra annotations for Datanode pods
+  podAnnotations: {}
   # Constrain Datanode pods to nodes with specific node labels
   nodeSelector: {}
   # Constrain Datanode pods to nodes by affinity/anti-affinity rules
@@ -116,6 +118,8 @@ om:
   envFrom: []
   # Ozone Manager resource requests and limits
   resources: {}
+  # Extra annotations for Ozone Manager pods
+  podAnnotations: {}
   # Constrain Ozone Manager pods to nodes with specific node labels
   nodeSelector: {}
   # Constrain Ozone Manager pods to nodes by affinity/anti-affinity rules
@@ -159,6 +163,8 @@ s3g:
   envFrom: []
   # S3 Gateway resource requests and limits
   resources: {}
+  # Extra annotations for S3 Gateway pods
+  podAnnotations: {}
   # Constrain S3 Gateway pods to nodes with specific node labels
   nodeSelector: {}
   # Constrain S3 Gateway pods to nodes by affinity/anti-affinity rules
@@ -209,6 +215,8 @@ scm:
   envFrom: []
   # Storage Container Manager resource requests and limits
   resources: {}
+  # Extra annotations for Storage Container Manager pods
+  podAnnotations: {}
   # Constrain Storage Container Manager pods to nodes with specific node labels
   nodeSelector: {}
   # Constrain Storage Container Manager pods to nodes by affinity/anti-affinity rules
