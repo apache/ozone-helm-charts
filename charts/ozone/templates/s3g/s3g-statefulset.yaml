@@ -18,6 +18,7 @@
 
 {{- $env := concat .Values.env .Values.s3g.env }}
 {{- $envFrom := concat .Values.envFrom .Values.s3g.envFrom }}
+{{- $podAnnotations := mergeOverwrite (deepCopy .Values.podAnnotations) .Values.s3g.podAnnotations }}
 {{- $nodeSelector := or .Values.s3g.nodeSelector .Values.nodeSelector }}
 {{- $affinity := or .Values.s3g.affinity .Values.affinity }}
 {{- $tolerations := or .Values.s3g.tolerations .Values.tolerations }}
@@ -40,7 +41,7 @@ spec:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/ozone-configmap.yaml") . | sha256sum }}
-        {{- with .Values.s3g.podAnnotations }}
+        {{- with $podAnnotations }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
       labels:

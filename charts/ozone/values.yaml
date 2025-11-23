@@ -25,6 +25,8 @@ imagePullSecrets: []
 env: []
 # Common envFrom items to set up environment variables (templated)
 envFrom: []
+# Common annotations for pods
+podAnnotations: {}
 
 # Configuration management
 configuration:
