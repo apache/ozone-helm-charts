@@ -52,6 +52,6 @@ S3 Gateway
 {{- if .Values.recon.enabled }}
 
 Recon
- To access Recon from a local environment, use the following command and specify localhost:{{ .Values.recon.service.port }} as Recon endpoint
+ To access Recon from a browser, use the following command and visit localhost:{{ .Values.recon.service.port }}
  $ kubectl port-forward svc/{{ .Release.Name }}-recon {{ .Values.recon.service.port }}:{{ .Values.recon.service.port }}
 {{- end }}
