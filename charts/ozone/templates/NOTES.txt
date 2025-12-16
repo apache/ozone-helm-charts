@@ -43,8 +43,11 @@ Datanode
  {{- end }}
 
 S3 Gateway
- To access S3 Gateway from a local environment, use the following command and specify localhost:{{ .Values.s3g.service.port }} as S3 endpoint
- $ kubectl port-forward svc/{{ .Release.Name }}-s3g {{ .Values.s3g.service.port }}:{{ .Values.s3g.service.port }}
+ To access S3 API from a local environment, use the following command and specify localhost:{{ .Values.s3g.service.rest.port }} as S3 endpoint
+ $ kubectl port-forward svc/{{ .Release.Name }}-s3g-rest {{ .Values.s3g.service.rest.port }}:{{ .Values.s3g.service.rest.port }}
+
+ To access S3 Gateway from a browser, use the following command and visit localhost:{{ .Values.s3g.service.web.port }}
+ $ kubectl port-forward svc/{{ .Release.Name }}-s3g-web {{ .Values.s3g.service.web.port }}:{{ .Values.s3g.service.web.port }}
 
 {{- if .Values.recon.enabled }}
 

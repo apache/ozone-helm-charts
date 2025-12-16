@@ -18,6 +18,7 @@
 
 {{- $env := concat .Values.env .Values.om.env }}
 {{- $envFrom := concat .Values.envFrom .Values.om.envFrom }}
+{{- $podAnnotations := mergeOverwrite (deepCopy .Values.podAnnotations) .Values.om.podAnnotations }}
 {{- $nodeSelector := or .Values.om.nodeSelector .Values.nodeSelector }}
 {{- $affinity := or .Values.om.affinity .Values.affinity }}
 {{- $tolerations := or .Values.om.tolerations .Values.tolerations }}
@@ -40,6 +41,9 @@ spec:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/ozone-configmap.yaml") . | sha256sum }}
+        {{- with $podAnnotations }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
       labels:
         {{- include "ozone.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: om
@@ -123,7 +127,7 @@ spec:
         resources:
           requests:
             storage: {{ .Values.om.persistence.size }}
-        {{- with .Values.scm.persistence.storageClassName }}
+        {{- with .Values.om.persistence.storageClassName }}
         storageClassName: {{ . }}
         {{- end }}
   {{- end }}
