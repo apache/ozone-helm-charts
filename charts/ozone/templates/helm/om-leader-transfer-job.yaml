@@ -52,8 +52,10 @@ spec:
           ports:
             - name: om-rpc
               containerPort: {{ $.Values.om.service.rpcPort }}
+            {{- if gt (int $.Values.om.replicas) 1 }}
             - name: om-ratis
               containerPort: {{ $.Values.om.service.ratisPort }}
+            {{- end }}
           volumeMounts:
             - name: config
               mountPath: {{ $.Values.configuration.dir }}

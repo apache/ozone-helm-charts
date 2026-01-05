@@ -40,7 +40,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/ozone-configmap.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/ozone-configmap.yaml") . | cat (include "ozone.configuration.env" .) | sha256sum }}
       labels:
         {{- include "ozone.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: scm
