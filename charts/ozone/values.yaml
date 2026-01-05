@@ -28,6 +28,8 @@ clusterId: cluster1
 env: []
 # Common envFrom items to set up environment variables (templated)
 envFrom: []
+# Common annotations for pods
+podAnnotations: {}
 
 # Configuration management
 configuration:
@@ -76,6 +78,8 @@ datanode:
   envFrom: []
   # Datanode resource requests and limits
   resources: {}
+  # Extra annotations for Datanode pods
+  podAnnotations: {}
   # Constrain Datanode pods to nodes with specific node labels
   nodeSelector: {}
   # Constrain Datanode pods to nodes by affinity/anti-affinity rules
@@ -121,6 +125,8 @@ om:
   envFrom: []
   # Ozone Manager resource requests and limits
   resources: {}
+  # Extra annotations for Ozone Manager pods
+  podAnnotations: {}
   # Constrain Ozone Manager pods to nodes with specific node labels
   nodeSelector: {}
   # Constrain Ozone Manager pods to nodes by affinity/anti-affinity rules
@@ -236,6 +242,8 @@ s3g:
   envFrom: []
   # S3 Gateway resource requests and limits
   resources: {}
+  # Extra annotations for S3 Gateway pods
+  podAnnotations: {}
   # Constrain S3 Gateway pods to nodes with specific node labels
   nodeSelector: {}
   # Constrain S3 Gateway pods to nodes by affinity/anti-affinity rules
@@ -278,7 +286,11 @@ helm:
   env: []
   # Additional Helm Manager envFrom items to set up environment variables (templated)
   envFrom: []
-  # Constrain Helm Manager pods to nodes with specific node labels
+  # Storage Container Manager resource requests and limits
+  resources: {}
+  # Extra annotations for Storage Container Manager pods
+  podAnnotations: {}
+  # Constrain Storage Container Manager pods to nodes with specific node labels
   nodeSelector: {}
   # Constrain Helm Manager pods to nodes by affinity/anti-affinity rules
   affinity: {}
@@ -294,5 +306,41 @@ helm:
   # Helm Manager persistence (this is enabled automatically if al least one
   # of datanode, scm or om is enabled)
   persistence:
-    # Path for Helm Manager volume mount
-    path: /metadata/helm
+    # Enable persistence
+    enabled: false
+    # Persistence access modes
+    accessModes:
+      - ReadWriteOnce
+    # Path for Storage Container Manager volume mount
+    path: /data
+    # Volume size
+    size: 10Gi
+    # The name of a specific storage class name to use
+    storageClassName: ~
+
+# Recon configuration
+recon:
+  enabled: false
+  # Command to launch Recon (templated)
+  command: ~
+  # Arguments to launch Recon (templated)
+  args: ["ozone", "recon"]
+  # Additional Recon environment variables (templated)
+  env: []
+  # Additional Recon envFrom items to set up environment variables (templated)
+  envFrom: []
+  # Constrain Recon pods to nodes with specific node labels
+  nodeSelector: {}
+  # Constrain Recon pods to nodes by affinity/anti-affinity rules
+  affinity: {}
+  # Allow to schedule Recon pods on nodes with matching taints
+  tolerations: []
+  # Recon security context (overwrites common security context)
+  securityContext: {}
+  # Recon service configuration
+  service:
+    type: ClusterIP
+    port: 9888
+    nodePort: ~
+    labels: {}
+    annotations: {}

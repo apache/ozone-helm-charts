@@ -167,6 +167,10 @@ app.kubernetes.io/instance: {{ .Release.Name }}
   value: "1"
 - name: OZONE-SITE.XML_dfs.datanode.use.datanode.hostname
   value: "true"
+{{- if .Values.recon.enabled }}
+- name: OZONE-SITE.XML_ozone.recon.address
+  value: "{{- printf "%s-recon.%s.svc.cluster.local" $.Release.Name $.Release.Namespace }}:9891"
+{{- end }}
 {{- end }}
 
 {{/* Common configuration environment variables */}}

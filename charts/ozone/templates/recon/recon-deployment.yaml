@@ -16,46 +16,42 @@
   limitations under the License.
 */}}
 
-{{- $env := concat .Values.env .Values.datanode.env }}
-{{- $envFrom := concat .Values.envFrom .Values.datanode.envFrom }}
-{{- $podAnnotations := mergeOverwrite (deepCopy .Values.podAnnotations) .Values.datanode.podAnnotations }}
-{{- $nodeSelector := or .Values.datanode.nodeSelector .Values.nodeSelector }}
-{{- $affinity := or .Values.datanode.affinity .Values.affinity }}
-{{- $tolerations := or .Values.datanode.tolerations .Values.tolerations }}
-{{- $securityContext := or .Values.datanode.securityContext .Values.securityContext }}
+{{- if .Values.recon.enabled }}
+{{- $env := concat .Values.env .Values.recon.env }}
+{{- $envFrom := concat .Values.envFrom .Values.recon.envFrom }}
+{{- $nodeSelector := or .Values.recon.nodeSelector .Values.nodeSelector }}
+{{- $affinity := or .Values.recon.affinity .Values.affinity }}
+{{- $tolerations := or .Values.recon.tolerations .Values.tolerations }}
+{{- $securityContext := or .Values.recon.securityContext .Values.securityContext }}
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-datanode
+  name: {{ .Release.Name }}-recon
   labels:
     {{- include "ozone.labels" . | nindent 4 }}
-    app.kubernetes.io/component: datanode
+    app.kubernetes.io/component: recon
 spec:
-  replicas: {{ .Values.datanode.replicas }}
-  serviceName: {{ .Release.Name }}-datanode-headless
+  replicas: 1
   selector:
     matchLabels:
       {{- include "ozone.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/component: datanode
+      app.kubernetes.io/component: recon
   template:
     metadata:
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/ozone-configmap.yaml") . | cat (include "ozone.configuration.env" .) | sha256sum }}
-        {{- with $podAnnotations }}
-          {{- toYaml . | nindent 8 }}
-        {{- end }}
+        checksum/config: {{ include (print $.Template.BasePath "/ozone-configmap.yaml") . | sha256sum }}
       labels:
         {{- include "ozone.selectorLabels" . | nindent 8 }}
-        app.kubernetes.io/component: datanode
+        app.kubernetes.io/component: recon
     spec:
       containers:
-        - name: datanode
+        - name: recon
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- with .Values.datanode.command }}
+          {{- with .Values.recon.command }}
           command: {{- tpl (toYaml .) $ | nindent 12 }}
           {{- end }}
-          {{- with .Values.datanode.args }}
+          {{- with .Values.recon.args }}
           args: {{- tpl (toYaml .) $ | nindent 12 }}
           {{- end }}
           env:
@@ -68,24 +64,18 @@ spec:
           {{- end }}
           ports:
             - name: ui
-              containerPort: {{ .Values.datanode.service.port }}
-            - name: ratis-ipc
-              containerPort: {{ .Values.datanode.service.ratisIpcPort }}
-            - name: ipc
-              containerPort: {{ .Values.datanode.service.ipcPort }}
+              containerPort: {{ .Values.recon.service.port }}
           livenessProbe:
-            httpGet:
-              path: /
-              port: ui
+            tcpSocket:
+              port: 9891
             initialDelaySeconds: 30
-          {{- with .Values.datanode.resources }}
-          resources: {{- toYaml . | nindent 12 }}
-          {{- end }}
+          readinessProbe:
+            tcpSocket:
+              port: 9891
+            initialDelaySeconds: 30
           volumeMounts:
             - name: config
               mountPath: {{ .Values.configuration.dir }}
-            - name: {{ .Release.Name }}-datanode
-              mountPath: {{ .Values.datanode.persistence.path }}
       {{- with $nodeSelector }}
       nodeSelector: {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -107,25 +97,4 @@ spec:
               {{- with .Values.configuration.filesFrom }}
                 {{- tpl (toYaml .) $ | nindent 14 }}
               {{- end }}
-        {{- if not .Values.datanode.persistence.enabled }}
-        - name: {{ .Release.Name }}-datanode
-          emptyDir: {}
-        {{- end }}
-  {{- if .Values.datanode.persistence.enabled }}
-  volumeClaimTemplates:
-    - metadata:
-        name: {{ .Release.Name }}-datanode
-        labels:
-          {{- include "ozone.labels" . | nindent 10 }}
-          app.kubernetes.io/component: datanode
-      spec:
-        {{- with .Values.datanode.persistence.accessModes }}
-        accessModes: {{- toYaml . | nindent 10 }}
-        {{- end }}
-        resources:
-          requests:
-            storage: {{ .Values.datanode.persistence.size }}
-        {{- with .Values.datanode.persistence.storageClassName }}
-        storageClassName: {{ . }}
-        {{- end }}
-  {{- end }}
+{{- end }}
