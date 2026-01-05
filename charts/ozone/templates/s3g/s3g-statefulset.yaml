@@ -18,7 +18,7 @@
 
 {{- $env := concat .Values.env .Values.s3g.env }}
 {{- $envFrom := concat .Values.envFrom .Values.s3g.envFrom }}
-{{- $podAnnotations := mergeOverwrite (deepCopy .Values.podAnnotations) .Values.s3g.podAnnotations }}
+{{- $podAnnotations := mergeOverwrite (deepCopy (default dict .Values.podAnnotations)) (default dict .Values.s3g.podAnnotations) }}
 {{- $nodeSelector := or .Values.s3g.nodeSelector .Values.nodeSelector }}
 {{- $affinity := or .Values.s3g.affinity .Values.affinity }}
 {{- $tolerations := or .Values.s3g.tolerations .Values.tolerations }}

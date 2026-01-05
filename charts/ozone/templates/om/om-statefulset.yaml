@@ -18,7 +18,7 @@
 
 {{- $env := concat .Values.env .Values.om.env }}
 {{- $envFrom := concat .Values.envFrom .Values.om.envFrom }}
-{{- $podAnnotations := mergeOverwrite (deepCopy .Values.podAnnotations) .Values.om.podAnnotations }}
+{{- $podAnnotations := mergeOverwrite (deepCopy (default dict .Values.podAnnotations)) (default dict .Values.om.podAnnotations) }}
 {{- $nodeSelector := or .Values.om.nodeSelector .Values.nodeSelector }}
 {{- $affinity := or .Values.om.affinity .Values.affinity }}
 {{- $tolerations := or .Values.om.tolerations .Values.tolerations }}
