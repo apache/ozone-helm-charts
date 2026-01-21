@@ -18,7 +18,7 @@
 
 {{- $env := concat .Values.env .Values.datanode.env }}
 {{- $envFrom := concat .Values.envFrom .Values.datanode.envFrom }}
-{{- $podAnnotations := mergeOverwrite (deepCopy .Values.podAnnotations) .Values.datanode.podAnnotations }}
+{{- $podAnnotations := mergeOverwrite (deepCopy (default dict .Values.podAnnotations)) (default dict .Values.datanode.podAnnotations) }}
 {{- $nodeSelector := or .Values.datanode.nodeSelector .Values.nodeSelector }}
 {{- $affinity := or .Values.datanode.affinity .Values.affinity }}
 {{- $tolerations := or .Values.datanode.tolerations .Values.tolerations }}
@@ -40,7 +40,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/ozone-configmap.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/ozone-configmap.yaml") . | cat (include "ozone.configuration.env" .) | sha256sum }}
         {{- with $podAnnotations }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -69,6 +69,10 @@ spec:
           ports:
             - name: ui
               containerPort: {{ .Values.datanode.service.port }}
+            - name: ratis-ipc
+              containerPort: {{ .Values.datanode.service.ratisIpcPort }}
+            - name: ipc
+              containerPort: {{ .Values.datanode.service.ipcPort }}
           livenessProbe:
             httpGet:
               path: /

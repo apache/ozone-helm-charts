@@ -21,6 +21,9 @@ image:
 
 imagePullSecrets: []
 
+# Cluster ID
+clusterId: cluster1
+
 # Common environment variables (templated)
 env: []
 # Common envFrom items to set up environment variables (templated)
@@ -89,6 +92,8 @@ datanode:
   service:
     type: ClusterIP
     port: 9882
+    ratisIpcPort: 9858
+    ipcPort: 9859
     nodePort: ~
     labels: {}
     annotations: {}
@@ -109,7 +114,7 @@ datanode:
 # Ozone Manager configuration
 om:
   # Number of Ozone Manager replicas
-  replicas: 1
+  replicas: 3
   # Command to launch Ozone Manager (templated)
   command: ~
   # Arguments to launch Ozone Manager (templated)
@@ -125,7 +130,18 @@ om:
   # Constrain Ozone Manager pods to nodes with specific node labels
   nodeSelector: {}
   # Constrain Ozone Manager pods to nodes by affinity/anti-affinity rules
-  affinity: {}
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/component
+                  operator: In
+                  values:
+                    - scm
+            topologyKey: kubernetes.io/hostname
   # Allow to schedule Ozone Manager pods on nodes with matching taints
   tolerations: []
   # Ozone Manager security context (overwrites common security context)
@@ -134,6 +150,8 @@ om:
   service:
     type: ClusterIP
     port: 9874
+    ratisPort: 9872
+    rpcPort: 9862
     nodePort: ~
     labels: {}
     annotations: {}
@@ -145,6 +163,65 @@ om:
     accessModes:
       - ReadWriteOnce
     # Path for Ozone Manager volume mount
+    path: /data
+    # Volume size
+    size: 10Gi
+    # The name of a specific storage class name to use
+    storageClassName: ~
+
+# Storage Container Manager configuration
+scm:
+  # Number of Storage Container Manager replicas
+  replicas: 1
+  # Command to launch Storage Container Manager (templated)
+  command: ~
+  # Arguments to launch Storage Container Manager (templated)
+  args: ["ozone", "scm"]
+  # Additional Storage Container Manager environment variables (templated)
+  env: []
+  # Additional Storage Container Manager envFrom items to set up environment variables (templated)
+  envFrom: []
+  # Storage Container Manager resource requests and limits
+  resources: {}
+  # Constrain Storage Container Manager pods to nodes with specific node labels
+  nodeSelector: {}
+  # Constrain Storage Container Manager pods to nodes by affinity/anti-affinity rules
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/component
+                  operator: In
+                  values:
+                    - om
+            topologyKey: kubernetes.io/hostname
+  # Allow to schedule Storage Container Manager pods on nodes with matching taints
+  tolerations: []
+  # Storage Container Manager security context (overwrites common security context)
+  securityContext: {}
+  # Storage Container Manager service configuration
+  service:
+    type: ClusterIP
+    port: 9876
+    rpcDatanodePort: 9861
+    blockClientPort: 9863
+    rpcClientPort: 9860
+    ratisPort: 9894
+    grpcPort: 9895
+    nodePort: ~
+    labels: {}
+    annotations: {}
+  # Storage Container Manager persistence
+  persistence:
+    # Enable persistence
+    enabled: false
+    # Persistence access modes
+    accessModes:
+      - ReadWriteOnce
+    # Path for Storage Container Manager volume mount
     path: /data
     # Volume size
     size: 10Gi
@@ -203,17 +280,11 @@ s3g:
     # The name of a specific storage class name to use
     storageClassName: ~
 
-# Storage Container Manager configuration
-scm:
-  # Number of Storage Container Manager replicas
-  replicas: 1
-  # Command to launch Storage Container Manager (templated)
-  command: ~
-  # Arguments to launch Storage Container Manager (templated)
-  args: ["ozone", "scm"]
-  # Additional Storage Container Manager environment variables (templated)
+# Helm Manager configuration
+helm:
+  # Additional Helm Manager environment variables (templated)
   env: []
-  # Additional Storage Container Manager envFrom items to set up environment variables (templated)
+  # Additional Helm Manager envFrom items to set up environment variables (templated)
   envFrom: []
   # Storage Container Manager resource requests and limits
   resources: {}
@@ -221,20 +292,19 @@ scm:
   podAnnotations: {}
   # Constrain Storage Container Manager pods to nodes with specific node labels
   nodeSelector: {}
-  # Constrain Storage Container Manager pods to nodes by affinity/anti-affinity rules
+  # Constrain Helm Manager pods to nodes by affinity/anti-affinity rules
   affinity: {}
-  # Allow to schedule Storage Container Manager pods on nodes with matching taints
+  # Allow to schedule Helm Manager pods on nodes with matching taints
   tolerations: []
-  # Storage Container Manager security context (overwrites common security context)
+  # Helm Manager security context (overwrites common security context)
   securityContext: {}
-  # Storage Container Manager service configuration
-  service:
-    type: ClusterIP
-    port: 9876
-    nodePort: ~
-    labels: {}
-    annotations: {}
-  # Storage Container Manager persistence
+  # Decommissioning is handled with a post-upgrade helm hook job.
+  # To avoid endless retries of decommissioning, this limit is set.
+  # This can happen if PVC has been deleted or is not reachable.
+  # This is used for decommissioning OM
+  backoffLimit: 5
+  # Helm Manager persistence (this is enabled automatically if al least one
+  # of datanode, scm or om is enabled)
   persistence:
     # Enable persistence
     enabled: false

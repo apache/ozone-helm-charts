@@ -1,0 +1,105 @@
+{{- if .Values.om.persistence.enabled }}
+{{- $dnodes := ternary (splitList "," (include "ozone.om.decommissioned.nodes" .)) (list) (ne "" (include "ozone.om.decommissioned.nodes" .)) }}
+{{- $env := concat .Values.env .Values.helm.env }}
+{{- $envFrom := concat .Values.envFrom .Values.helm.envFrom }}
+{{- $nodeSelector := or .Values.helm.nodeSelector .Values.nodeSelector }}
+{{- $affinity := or .Values.helm.affinity .Values.affinity }}
+{{- $tolerations := or .Values.helm.tolerations .Values.tolerations }}
+{{- $securityContext := or .Values.helm.securityContext .Values.securityContext }}
+{{- if (gt (len $dnodes) 0) }}
+{{- range $dnode := $dnodes }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ printf "%s-helm-manager-decommission-%s" $.Release.Name $dnode }}
+  labels:
+    {{- include "ozone.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: helm-manager
+  annotations:
+    "helm.sh/hook": post-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": hook-succeeded, hook-failed
+spec:
+  backoffLimit: {{ $.Values.helm.backoffLimit }}
+  template:
+    metadata:
+      labels:
+        {{- include "ozone.selectorLabels" $ | nindent 8 }}
+        app.kubernetes.io/component: helm-manager
+    spec:
+      containers:
+        - name: om-decommission
+          image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag | default $.Chart.AppVersion }}"
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          {{- with $.Values.om.command }}
+          command: {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          args:
+            - sh
+            - -c
+            - |
+              set -e
+              decommission_finalizer() {
+                  echo "Init decommission finalizer process..."
+                  while true; do
+                    IFS= read -r line;
+                    echo "$line"
+                    if echo "$line" | grep -q "Successfully decommissioned OM {{ $dnode }}"; then
+                      echo "{{ $dnode }} was successfully decommissioned!"
+                      if [ -d /old{{ $.Values.om.persistence.path }} ]; then
+                        echo "Delete old data on pvc to enable rescheduling without manual PVC deletion!"
+                        rm -rf  /old{{ $.Values.om.persistence.path }}/*
+                        echo "Data deleted!"
+                      fi
+                      break;
+                    fi
+                  done
+                  echo "Decommission finalizer process finished!"
+                  exit 0
+              }
+              exec ozone admin om decommission -id={{ $.Values.clusterId }} -nodeid={{ $dnode }} -hostname={{ printf "%s-helm-manager-decommission-%s-svc.%s.svc.cluster.local" $.Release.Name $dnode $.Release.Namespace }} | decommission_finalizer
+          env:
+            {{- include "ozone.configuration.env" $ | nindent 12 }}
+            {{- with $env }}
+              {{- tpl (toYaml .) $ | nindent 12 }}
+            {{- end }}
+          {{- with $envFrom }}
+          envFrom: {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: om-rpc
+              containerPort: {{ $.Values.om.service.rpcPort }}
+            - name: om-ratis
+              containerPort: {{ $.Values.om.service.ratisPort }}
+          volumeMounts:
+            - name: config
+              mountPath: {{ $.Values.configuration.dir }}
+            - name: om-data
+              mountPath: {{ $.Values.om.persistence.path }}
+            - name: om-data-old
+              mountPath: /old{{ $.Values.om.persistence.path }}
+      {{- with $nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $securityContext }}
+      securityContext: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: om-data-old
+          persistentVolumeClaim:
+            claimName: {{ $.Release.Name}}-om-{{ $dnode }}
+        - name: om-data
+          emptyDir: { }
+        - name: config
+          projected:
+            sources:
+              - configMap:
+                  name: {{ $.Release.Name }}-ozone
+              {{- with $.Values.configuration.filesFrom }}
+                {{- tpl (toYaml .) $ | nindent 14 }}
+              {{- end }}
+      restartPolicy: Never
+{{- end }}
+{{- end }}
+{{- end }}

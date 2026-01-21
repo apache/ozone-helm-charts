@@ -18,11 +18,12 @@
 
 {{- $env := concat .Values.env .Values.om.env }}
 {{- $envFrom := concat .Values.envFrom .Values.om.envFrom }}
-{{- $podAnnotations := mergeOverwrite (deepCopy .Values.podAnnotations) .Values.om.podAnnotations }}
+{{- $podAnnotations := mergeOverwrite (deepCopy (default dict .Values.podAnnotations)) (default dict .Values.om.podAnnotations) }}
 {{- $nodeSelector := or .Values.om.nodeSelector .Values.nodeSelector }}
 {{- $affinity := or .Values.om.affinity .Values.affinity }}
 {{- $tolerations := or .Values.om.tolerations .Values.tolerations }}
 {{- $securityContext := or .Values.om.securityContext .Values.securityContext }}
+{{- $bnodes := ternary (splitList "," (include "ozone.om.bootstrap.nodes" .)) (list) (ne "" (include "ozone.om.bootstrap.nodes" .)) }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -40,7 +41,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/ozone-configmap.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/ozone-configmap.yaml") . | cat (include "ozone.configuration.env" .) | sha256sum }}
         {{- with $podAnnotations }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -48,6 +49,28 @@ spec:
         {{- include "ozone.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: om
     spec:
+      {{- if and .Values.om.persistence.enabled (gt (len $bnodes) 0) }}
+      initContainers:
+        - name: om-bootstrap
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/bin/sh", "/scripts/om-bootstrap.sh"]
+          env:
+            {{- include "ozone.configuration.env" . | nindent 12 }}
+            {{- with $env }}
+              {{- tpl (toYaml .) $ | nindent 12 }}
+            {{- end }}
+          {{- with $envFrom }}
+          envFrom: {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: {{ .Values.configuration.dir }}
+            - name: {{ .Release.Name }}-om
+              mountPath: {{ .Values.om.persistence.path }}
+            - name: om-bootstrap-script
+              mountPath: /scripts
+      {{- end }}
       containers:
         - name: om
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -55,13 +78,11 @@ spec:
           {{- with .Values.om.command }}
           command: {{- tpl (toYaml .) $ | nindent 12 }}
           {{- end }}
-          {{- with .Values.om.args }}
-          args: {{- tpl (toYaml .) $ | nindent 12 }}
-          {{- end }}
+          args: {{- tpl (toYaml .Values.om.args) $ | nindent 12 }}
           env:
             {{- include "ozone.configuration.env" . | nindent 12 }}
             - name: WAITFOR
-              value: {{ $.Release.Name }}-scm-0.{{ $.Release.Name }}-scm-headless:9876
+              value: {{ $.Release.Name }}-scm-0.{{ $.Release.Name }}-scm-headless:{{ .Values.scm.service.port }}
             - name: ENSURE_OM_INITIALIZED
               value: /data/metadata/om/current/VERSION
             {{- with $env }}
@@ -72,9 +93,11 @@ spec:
           {{- end }}
           ports:
             - name: rpc
-              containerPort: 9862
+              containerPort: {{ .Values.om.service.rpcPort }}
             - name: ui
               containerPort: {{ .Values.om.service.port }}
+            - name: ratis
+              containerPort: {{ .Values.om.service.ratisPort }}
           livenessProbe:
             httpGet:
               path: /
@@ -101,6 +124,12 @@ spec:
       securityContext: {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
+        {{- if and .Values.om.persistence.enabled (gt (len $bnodes) 0) }}
+        - name: om-bootstrap-script
+          configMap:
+            name: {{ .Release.Name }}-om-bootstrap-script
+            defaultMode: 0777
+        {{- end }}
         - name: config
           projected:
             sources:
@@ -111,7 +140,7 @@ spec:
               {{- end }}
         {{- if not .Values.om.persistence.enabled }}
         - name: {{ .Release.Name }}-om
-          emptyDir: {}
+          emptyDir: { }
         {{- end }}
   {{- if .Values.om.persistence.enabled }}
   volumeClaimTemplates:

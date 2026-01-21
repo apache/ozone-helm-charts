@@ -28,6 +28,12 @@ spec:
   ports:
     - name: ui
       port: {{ .Values.om.service.port }}
+    - name: rpc
+      port: {{ .Values.om.service.rpcPort }}
+    {{- if gt (int .Values.om.replicas) 1 }}
+    - name: ratis
+      port: {{ .Values.om.service.ratisPort }}
+    {{- end }}
   selector:
     {{- include "ozone.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: om

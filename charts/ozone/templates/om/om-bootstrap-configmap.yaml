@@ -1,0 +1,98 @@
+{{- if and .Values.om.persistence.enabled (gt (len (ternary (splitList "," (include "ozone.om.bootstrap.nodes" .)) (list) (ne "" (include "ozone.om.bootstrap.nodes" .)))) 0) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-om-bootstrap-script
+  labels:
+    {{- include "ozone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: om
+data:
+  om-bootstrap.sh: |-
+    #!/bin/sh
+    set -e
+
+    HELM_MANAGER_PATH="{{ .Values.om.persistence.path }}{{ .Values.helm.persistence.path }}"
+    HELM_MANAGER_BOOTSTRAPPED_FILE="$HELM_MANAGER_PATH/bootstrapped"
+
+    # These are templated from Helm
+    OZONE_OM_ARGS_LIST="{{- range .Values.om.args }} {{ . }} {{- end }}"
+    OZONE_OM_BOOTSTRAP_NODES="{{ include "ozone.om.bootstrap.nodes" . }}"
+    OZONE_OM_CLUSTER_IDS="{{ include "ozone.om.cluster.ids" . }}"
+    OZONE_CLUSTER_ID="{{ .Values.clusterId }}"
+
+    if [ -z "$OZONE_OM_BOOTSTRAP_NODES" ]; then
+      echo "No bootstrap handling needed!"
+      exit 0
+    fi
+
+    joinArr() {
+      local IFS=","
+      echo "$*"
+    }
+
+    run_bootstrap() {
+      local overwriteCmd="$1"
+      local max_attempts=3
+      local attempt=1
+      local base_delay=5
+      local exit_code=0
+      
+      echo "Bootstrapping node config for this node: $overwriteCmd"
+      
+      while [ $attempt -le $max_attempts ]; do
+        echo "Bootstrap attempt $attempt of $max_attempts"
+        
+        if ozone admin om --set "ozone.om.nodes.$OZONE_CLUSTER_ID=$overwriteCmd" --bootstrap; then
+          echo "$HOSTNAME was successfully bootstrapped!"
+          mkdir -p "$HELM_MANAGER_PATH"
+          touch "$HELM_MANAGER_BOOTSTRAPPED_FILE"
+          exit 0
+        else
+          exit_code=$?
+          echo "Bootstrap failed with exit code $exit_code, attempt $attempt of $max_attempts"
+          
+          if [ $attempt -lt $max_attempts ]; then
+            local delay=$((base_delay * (1 << (attempt - 1))))
+            echo "Retrying in $delay seconds..."
+            sleep $delay
+          fi
+          
+          attempt=$((attempt + 1))
+        fi
+      done
+      
+      echo "Bootstrap failed after $max_attempts attempts with exit code $exit_code"
+      exit 1
+    }
+
+    bootstrapHosts="$OZONE_OM_BOOTSTRAP_NODES"
+    echo "Need to handle bootstrap for nodes $bootstrapHosts"
+
+    IFS=',' read -r -a hostArray <<< "$bootstrapHosts"
+    doBootstrap=false
+    nodesConfigOverwriteList=()
+
+    for host in "${hostArray[@]}"; do
+      if [[ "$host" == "$HOSTNAME" ]]; then
+        doBootstrap=true
+        activeNodesConfig="$OZONE_OM_CLUSTER_IDS"
+        IFS=',' read -r -a overwriteArray <<< "$activeNodesConfig"
+        for overwriteHost in "${overwriteArray[@]}"; do
+          nodesConfigOverwriteList+=("$overwriteHost")
+          if [[ "$overwriteHost" == "$HOSTNAME" ]]; then
+            break;
+          fi
+        done
+        break
+      fi
+    done
+
+    if [ "$doBootstrap" = true ] && [ ! -f "$HELM_MANAGER_BOOTSTRAPPED_FILE" ]; then
+      echo "$HOSTNAME must be started with bootstrap arg!"
+      overwriteCmd="$(joinArr "${nodesConfigOverwriteList[@]}")"
+      run_bootstrap "$overwriteCmd"
+    else
+      echo "$HOSTNAME must not be started with bootstrap arg, or is already bootstrapped."
+      exit 0
+    fi
+{{- end }}

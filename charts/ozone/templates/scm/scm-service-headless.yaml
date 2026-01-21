@@ -28,6 +28,18 @@ spec:
   ports:
     - name: ui
       port: {{ .Values.scm.service.port }}
+    - name: rpc-datanode
+      port: {{ .Values.scm.service.rpcDatanodePort }}
+    - name: block-client
+      port: {{ .Values.scm.service.blockClientPort }}
+    - name: rpc-client
+      port: {{ .Values.scm.service.rpcClientPort }}
+    {{- if gt (int .Values.scm.replicas) 1 }}
+    - name: ratis
+      port: {{ .Values.scm.service.ratisPort }}
+    - name: grpc
+      port: {{ .Values.scm.service.grpcPort }}
+    {{- end }}
   selector:
     {{- include "ozone.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: scm
