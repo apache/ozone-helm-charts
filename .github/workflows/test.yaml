@@ -25,7 +25,7 @@ jobs:
           python-version: 3.x
 
       - name: Set up chart-testing
-        uses: ./.github/actions/chart-testing-action
+        uses: helm/chart-testing-action@6ec842c01de15ebb84c8627d2744a0c2f2755c9f # v2.8.0
 
       - name: Find changes (PR)
         if: github.event_name == 'pull_request'
@@ -46,7 +46,7 @@ jobs:
 
       - name: Create kind cluster
         if: env.test_scope != ''
-        uses: ./.github/actions/kind-action
+        uses: helm/kind-action@ef37e7f390d99f746eb8b610417061a60e82a6cc # v1.14.0
 
       - name: Run chart-testing (install)
         if: env.test_scope != ''

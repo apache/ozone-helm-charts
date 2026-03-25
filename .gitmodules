@@ -14,12 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-[submodule ".github/actions/chart-testing-action"]
-	path = .github/actions/chart-testing-action
-	url = https://github.com/helm/chart-testing-action
-[submodule ".github/actions/kind-action"]
-	path = .github/actions/kind-action
-	url = https://github.com/helm/kind-action
 [submodule ".github/actions/chart-releaser-action"]
 	path = .github/actions/chart-releaser-action
 	url = https://github.com/helm/chart-releaser-action
