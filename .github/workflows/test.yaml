@@ -17,7 +17,7 @@ jobs:
           submodules: recursive
 
       - name: Set up Helm
-        uses: ./.github/actions/setup-helm
+        uses: azure/setup-helm@v5.0.0
 
       - name: Set up Python
         uses: actions/setup-python@v6
