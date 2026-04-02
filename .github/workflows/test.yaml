@@ -10,22 +10,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout ${{ github.ref }} ( ${{ github.sha }} )"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           persist-credentials: false
           submodules: recursive
 
       - name: Set up Helm
-        uses: azure/setup-helm@v4.2.0
+        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.x
 
       - name: Set up chart-testing
-        uses: ./.github/actions/chart-testing-action
+        uses: helm/chart-testing-action@6ec842c01de15ebb84c8627d2744a0c2f2755c9f # v2.8.0
 
       - name: Find changes (PR)
         if: github.event_name == 'pull_request'
@@ -46,7 +46,7 @@ jobs:
 
       - name: Create kind cluster
         if: env.test_scope != ''
-        uses: ./.github/actions/kind-action
+        uses: helm/kind-action@ef37e7f390d99f746eb8b610417061a60e82a6cc # v1.14.0
 
       - name: Run chart-testing (install)
         if: env.test_scope != ''
