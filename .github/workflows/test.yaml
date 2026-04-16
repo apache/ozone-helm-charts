@@ -32,10 +32,12 @@ jobs:
       - name: Find changes (PR)
         if: github.event_name == 'pull_request'
         run: |
-          changed=$(ct list-changed --target-branch ${{ github.base_ref }})
+          changed=$(ct list-changed --target-branch "$base_ref")
           if [[ -n "$changed" ]]; then
-            echo "test_scope=--target-branch ${{ github.base_ref }}" >> "$GITHUB_ENV"
+            echo "test_scope=--target-branch '$base_ref'" >> "$GITHUB_ENV"
           fi
+        env:
+          base_ref: ${{ github.base_ref }}
 
       - name: Find changes (push)
         if: github.event_name != 'pull_request'
@@ -44,7 +46,7 @@ jobs:
 
       - name: Run chart-testing (lint)
         if: env.test_scope != ''
-        run: ct lint ${{ env.test_scope }} --validate-maintainers=false --check-version-increment=false
+        run: ct lint $test_scope --validate-maintainers=false --check-version-increment=false
 
       - name: Create kind cluster
         if: env.test_scope != ''
@@ -52,4 +54,4 @@ jobs:
 
       - name: Run chart-testing (install)
         if: env.test_scope != ''
-        run: ct install ${{ env.test_scope }}
+        run: ct install $test_scope
