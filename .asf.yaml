@@ -24,14 +24,26 @@ github:
     - ozone
     - container
   enabled_merge_buttons:
-    squash:  true
+    squash: true
     squash_commit_message: PR_TITLE
-    merge:   false
-    rebase:  false
+    merge: false
+    rebase: false
   ghp_branch: gh-pages
   ghp_path: /
+  rulesets:
+    - name: "Default Branch Protection"
+      type: branch
+      branches:
+        includes:
+          - "~DEFAULT_BRANCH"
+          - "gh-pages"
+        excludes: []
+      bypass_teams:
+        - root
+      restrict_deletion: true
+      restrict_force_push: true
 notifications:
-  commits:      commits@ozone.apache.org
-  issues:       issues@ozone.apache.org
+  commits: commits@ozone.apache.org
+  issues: issues@ozone.apache.org
   pullrequests: issues@ozone.apache.org
   jira_options: link label worklog
