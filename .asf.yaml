@@ -36,8 +36,7 @@ github:
       branches:
         includes:
           - "~DEFAULT_BRANCH"
-          - "release/*"
-          - "rel/*"
+          - "gh-pages"
         excludes: []
       bypass_teams:
         - root
