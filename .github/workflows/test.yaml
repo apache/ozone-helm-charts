@@ -22,6 +22,10 @@ on:
 
 permissions: { }
 
+env:
+  CT_IMAGE: quay.io/helmpack/chart-testing:v3.14.0
+  DOCKER_COMMAND: docker run --network host --rm -w /data
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -33,21 +37,14 @@ jobs:
           persist-credentials: false
           submodules: recursive
 
-      - name: Set up Helm
-        uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
-
-      - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-        with:
-          python-version: 3.x
-
       - name: Set up chart-testing
-        uses: helm/chart-testing-action@6ec842c01de15ebb84c8627d2744a0c2f2755c9f # v2.8.0
+        run: |
+          docker pull $CT_IMAGE
 
       - name: Find changes (PR)
         if: github.event_name == 'pull_request'
         run: |
-          changed=$(ct list-changed --target-branch "$base_ref")
+          changed=$($DOCKER_COMMAND -v $(pwd):/data --user $(id -u) $CT_IMAGE ct list-changed --target-branch "$base_ref")
           if [[ -n "$changed" ]]; then
             echo "test_scope=--target-branch '$base_ref'" >> "$GITHUB_ENV"
           fi
@@ -61,7 +58,13 @@ jobs:
 
       - name: Run chart-testing (lint)
         if: env.test_scope != ''
-        run: ct lint $test_scope --validate-maintainers=false --check-version-increment=false
+        run: |
+          $DOCKER_COMMAND -v $(pwd):/data $CT_IMAGE \
+              ct lint $test_scope --validate-maintainers=false --check-version-increment=false
+
+      - name: Set up Helm
+        if: env.test_scope != ''
+        uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
 
       - name: Create kind cluster
         if: env.test_scope != ''
@@ -69,4 +72,6 @@ jobs:
 
       - name: Run chart-testing (install)
         if: env.test_scope != ''
-        run: ct install $test_scope
+        run: |
+          $DOCKER_COMMAND -v $(pwd):/data -v ~/.kube/config:/root/.kube/config:ro $CT_IMAGE \
+              ct install $test_scope
