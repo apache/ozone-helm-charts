@@ -73,5 +73,5 @@ jobs:
       - name: Run chart-testing (install)
         if: env.test_scope != ''
         run: |
-          $DOCKER_COMMAND -v $(pwd):/data -v ~/.kube/config:/root/.kube/config:ro $CT_IMAGE \
+          $DOCKER_COMMAND -v $(pwd):/data -v ~/.kube/config:/root/.kube/config:ro --user $(id -u) $CT_IMAGE \
               ct install $test_scope
