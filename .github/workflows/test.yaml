@@ -44,9 +44,9 @@ jobs:
       - name: Find changes (PR)
         if: github.event_name == 'pull_request'
         run: |
-          changed=$($DOCKER_COMMAND -v $(pwd):/data --user $(id -u) $CT_IMAGE ct list-changed --target-branch "$base_ref")
+          changed=$($DOCKER_COMMAND -v $(pwd):/data --user $(id -u) $CT_IMAGE ct list-changed --target-branch $base_ref)
           if [[ -n "$changed" ]]; then
-            echo "test_scope=--target-branch '$base_ref'" >> "$GITHUB_ENV"
+            echo "test_scope=--target-branch $base_ref" >> "$GITHUB_ENV"
           fi
         env:
           base_ref: ${{ github.base_ref }}
