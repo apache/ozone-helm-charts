@@ -59,7 +59,7 @@ jobs:
       - name: Run chart-testing (lint)
         if: env.test_scope != ''
         run: |
-          $DOCKER_COMMAND -v $(pwd):/data $CT_IMAGE \
+          $DOCKER_COMMAND -v $(pwd):/data --user $(id -u) $CT_IMAGE \
               ct lint $test_scope --validate-maintainers=false --check-version-increment=false
 
       - name: Set up Helm
