@@ -49,6 +49,9 @@ spec:
         {{- include "ozone.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: om
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- if and .Values.om.persistence.enabled (gt (len $bnodes) 0) }}
       initContainers:
         - name: om-bootstrap
