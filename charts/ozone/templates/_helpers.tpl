@@ -31,26 +31,6 @@ app.kubernetes.io/name: {{ .Chart.Name }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
-{{/* List of comma separated SCM pod names */}}
-{{- define "ozone.scm.pods" -}}
-  {{- $pods := list }}
-  {{- $replicas := .Values.scm.replicas | int }}
-  {{- range $i := until $replicas }}
-    {{- $pods = append $pods (printf "%s-scm-%d.%s-scm-headless" $.Release.Name $i $.Release.Name) }}
-  {{- end }}
-  {{- $pods | join "," }}
-{{- end }}
-
-{{/* List of comma separated OM pod names */}}
-{{- define "ozone.om.pods" -}}
-  {{- $pods := list }}
-  {{- $replicas := .Values.om.replicas | int }}
-  {{- range $i := until $replicas }}
-    {{- $pods = append $pods (printf "%s-om-%d.%s-om-headless" $.Release.Name $i $.Release.Name) }}
-  {{- end }}
-  {{- $pods | join "," }}
-{{- end }}
-
 {{/* List of comma separated om ids */}}
 {{- define "ozone.om.cluster.ids" -}}
   {{- $pods := list }}
@@ -104,38 +84,6 @@ app.kubernetes.io/instance: {{ .Release.Name }}
     {{- $nodes | join ","}}
 {{- end }}
 
-{{/* List of decommission scm nodes */}}
-{{- define "ozone.scm.decommissioned.nodes" -}}
-    {{- $nodes := list }}
-    {{- $statefulset := lookup "apps/v1" "StatefulSet" $.Release.Namespace (printf "%s-scm" $.Release.Name) -}}
-    {{- if $statefulset }}
-      {{- $oldCount := $statefulset.spec.replicas | int -}}
-      {{- $newCount := .Values.scm.replicas | int }}
-        {{- range $i := until $oldCount }}
-          {{- if ge $i $newCount }}
-            {{- $nodes = append $nodes (printf "%s-scm-%d" $.Release.Name $i) }}
-          {{- end }}
-        {{- end }}
-    {{- end }}
-    {{- $nodes | join "," -}}
-{{- end }}
-
-{{/* List of decommission data nodes */}}
-{{- define "ozone.data.decommissioned.hosts" -}}
-    {{- $hosts := list }}
-    {{- $statefulset := lookup "apps/v1" "StatefulSet" $.Release.Namespace (printf "%s-datanode" $.Release.Name) -}}
-    {{- if $statefulset }}
-      {{- $oldCount := $statefulset.spec.replicas | int -}}
-      {{- $newCount := .Values.datanode.replicas | int }}
-        {{- range $i := until $oldCount }}
-          {{- if ge $i $newCount }}
-            {{- $hosts = append $hosts (printf "%s-datanode-%d.%s-datanode-headless.%s.svc.cluster.local" $.Release.Name $i $.Release.Name $.Release.Namespace) }}
-          {{- end }}
-        {{- end }}
-    {{- end }}
-    {{- $hosts | join "," -}}
-{{- end }}
-
 {{- define "ozone.configuration.env.common" -}}
 - name: OZONE-SITE.XML_hdds.datanode.dir
   value: /data/storage
@@ -149,8 +97,6 @@ app.kubernetes.io/instance: {{ .Release.Name }}
   value: {{ .Values.clusterId }}
 - name: OZONE-SITE.XML_ozone.scm.nodes.{{ .Values.clusterId }}
   value: {{ include "ozone.scm.cluster.ids" . }}
-  {{/*- name: OZONE-SITE.XML_ozone.scm.skip.bootstrap.validation*/}}
-  {{/*  value: {{ quote .Values.scm.skipBootstrapValidation }}*/}}
 {{- range $i, $val := until ( .Values.scm.replicas | int ) }}
 - name: {{ printf "OZONE-SITE.XML_ozone.scm.address.%s.%s-scm-%d" $.Values.clusterId $.Release.Name $i }}
   value: {{ printf "%s-scm-%d.%s-scm-headless.%s.svc.cluster.local" $.Release.Name $i $.Release.Name $.Release.Namespace }}
@@ -178,12 +124,12 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- $bOmNodes := ternary (splitList "," (include "ozone.om.bootstrap.nodes" .)) (list) (ne "" (include "ozone.om.bootstrap.nodes" .)) }}
 {{- $dOmNodes := ternary (splitList "," (include "ozone.om.decommissioned.nodes" .)) (list) (ne "" (include "ozone.om.decommissioned.nodes" .)) }}
 {{- $activeOmNodes := ternary (splitList "," (include "ozone.om.cluster.ids" .)) (list) (ne "" (include "ozone.om.cluster.ids" .)) }}
-{{ include "ozone.configuration.env.common" . }}
+{{- include "ozone.configuration.env.common" . }}
 {{- if gt (len $dOmNodes) 0 }}
 {{- $decomIds := $dOmNodes | join "," }}
 - name: OZONE-SITE.XML_ozone.om.decommissioned.nodes.{{ .Values.clusterId }}
   value: {{ $decomIds }}
-{{- else}}
+{{- else }}
 - name: OZONE-SITE.XML_ozone.om.decommissioned.nodes.{{ .Values.clusterId }}
   value: ""
 {{- end }}
@@ -205,7 +151,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- $dOmNodes := ternary (splitList "," (include "ozone.om.decommissioned.nodes" .)) (list) (ne "" (include "ozone.om.decommissioned.nodes" .)) }}
 {{- $activeOmNodes := ternary (splitList "," (include "ozone.om.cluster.ids" .)) (list) (ne "" (include "ozone.om.cluster.ids" .)) }}
 {{- $allOmNodes := concat $activeOmNodes $dOmNodes }}
-{{ include "ozone.configuration.env.common" . }}
+{{- include "ozone.configuration.env.common" . }}
 - name: OZONE-SITE.XML_ozone.om.decommissioned.nodes.{{ .Values.clusterId }}
   value: ""
 {{- range $tempId := $allOmNodes }}

@@ -78,7 +78,7 @@ spec:
       {{- end }}
       volumes:
         - name: om-data
-          emptyDir: { }
+          emptyDir: {}
         - name: config
           projected:
             sources:
