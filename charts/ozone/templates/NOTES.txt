@@ -55,3 +55,18 @@ Recon
  To access Recon from a browser, use the following command and visit localhost:{{ .Values.recon.service.port }}
  $ kubectl port-forward svc/{{ .Release.Name }}-recon {{ .Values.recon.service.port }}:{{ .Values.recon.service.port }}
 {{- end }}
+
+****************
+*   Replicas   *
+****************
+Ozone Manager (om.replicas): {{ .Values.om.replicas }}
+Storage Container Manager (scm.replicas): {{ .Values.scm.replicas }}
+
+{{- if eq (mod .Values.om.replicas 2) 0 }}
+WARNING: om.replicas={{ .Values.om.replicas }} is even. Odd replica counts (1, 3, 5, ...) are recommended for Raft quorum.
+Even counts may be used temporarily during OM migration (bootstrap/decommission), but are not recommended as a steady state.
+{{- end }}
+{{- if eq (mod .Values.scm.replicas 2) 0 }}
+WARNING: scm.replicas={{ .Values.scm.replicas }} is even. Odd replica counts (1, 3, 5, ...) are recommended for Raft quorum.
+Even counts may be used temporarily during SCM migration (bootstrap/decommission), but are not recommended as a steady state.
+{{- end }}
