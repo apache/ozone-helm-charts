@@ -120,6 +120,19 @@ spec:
             - name: grpc
               containerPort: {{ .Values.scm.service.grpcPort }}
             {{- end }}
+          {{- if gt (int .Values.scm.replicas) 1 }}
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - |
+                  ozone admin scm roles 2>/dev/null | grep $(hostname -f) | grep -qE 'LEADER|FOLLOWER' && exit 0 || exit 1
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 20
+            failureThreshold: 3
+          {{- end }}
           livenessProbe:
             httpGet:
               path: /
