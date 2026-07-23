@@ -120,6 +120,21 @@ spec:
             - name: grpc
               containerPort: {{ .Values.scm.service.grpcPort }}
             {{- end }}
+          {{- if gt (int .Values.scm.replicas) 1 }}
+          startupProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - |
+                  ozone admin scm roles 2>/dev/null | grep -q $(hostname -f) \
+                  && ozone admin safemode status 2>/dev/null | grep -q 'out of safe mode' \
+                  && exit 0 || exit 1
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 30
+            timeoutSeconds: 20
+          {{- end }}
           livenessProbe:
             httpGet:
               path: /

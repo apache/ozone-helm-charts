@@ -25,6 +25,7 @@ metadata:
     app.kubernetes.io/component: scm
 spec:
   clusterIP: None
+  publishNotReadyAddresses: true
   ports:
     - name: ui
       port: {{ .Values.scm.service.port }}
