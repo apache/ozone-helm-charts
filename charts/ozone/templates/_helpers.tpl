@@ -171,6 +171,10 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 - name: OZONE-SITE.XML_ozone.recon.address
   value: "{{- printf "%s-recon.%s.svc.cluster.local" $.Release.Name $.Release.Namespace }}:9891"
 {{- end }}
+{{- range $k, $v := .Values.ratis.ozoneSite }}
+- name: OZONE-SITE.XML_{{ $k }}
+  value: {{ $v | quote }}
+{{- end }}
 {{- end }}
 
 {{/* Common configuration environment variables */}}

@@ -54,6 +54,25 @@ configuration:
   #        - key: ozone
   #          path: /etc/hadoop/ozone-site.xml
 
+# Advanced Ratis (OM/SCM) tuning: network resilience timeouts and leader election.
+ratis:
+  # Empty by default; Ozone's built-in defaults apply.
+  # A curated set of properties useful on slow/flaky networks. Values below are
+  # Ozone 2.1.1's own defaults; edit before uncommenting. See ozone-default.xml
+  # for the up-to-date list of available properties:
+  #   ozoneSite:
+  #     ozone.om.ratis.server.request.timeout: "3s"
+  #     ozone.om.ratis.minimum.timeout: "5s"
+  #     ozone.om.ratis.server.failure.timeout.duration: "120s"
+  #     ozone.om.ratis.server.leaderelection.pre-vote: "true"
+  #     ozone.scm.ha.ratis.request.timeout: "30s"
+  #     ozone.scm.ha.ratis.leader.election.timeout: "5s"
+  #     # unset (empty) by default; falls back to leader.election.timeout above
+  #     ozone.scm.ha.raft.server.rpc.first-election.timeout: "10s"
+  #     ozone.scm.ha.ratis.server.leaderelection.pre-vote: "true"
+  #     ozone.scm.ha.ratis.server.failure.timeout.duration: "120s"
+  ozoneSite: {}
+
 # Constrain all Ozone pods to nodes with specific node labels
 nodeSelector: {}
 # Constrain all Ozone pods to nodes by affinity/anti-affinity rules
