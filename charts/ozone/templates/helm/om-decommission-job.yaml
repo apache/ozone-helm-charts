@@ -99,7 +99,7 @@ spec:
           persistentVolumeClaim:
             claimName: {{ $.Release.Name}}-om-{{ $dnode }}
         - name: om-data
-          emptyDir: { }
+          emptyDir: {}
         - name: config
           projected:
             sources:
