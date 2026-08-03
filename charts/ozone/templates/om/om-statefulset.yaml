@@ -51,7 +51,7 @@ spec:
         app.kubernetes.io/component: om
     spec:
       {{- if gt (int .Values.om.replicas) 1 }}
-      terminationGracePeriodSeconds: 150
+      terminationGracePeriodSeconds: {{ .Values.om.terminationGracePeriodSeconds }}
       {{- end }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets: {{- toYaml . | nindent 8 }}
@@ -126,10 +126,10 @@ spec:
                 - -c
                 - |
                   ozone admin om roles -id {{ .Values.clusterId }} 2>/dev/null | grep -q $(hostname) && exit 0 || exit 1
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            failureThreshold: 30
-            timeoutSeconds: 20
+            initialDelaySeconds: {{ .Values.om.startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.om.startupProbe.periodSeconds }}
+            failureThreshold: {{ .Values.om.startupProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.om.startupProbe.timeoutSeconds }}
           {{- end }}
           livenessProbe:
             httpGet:
