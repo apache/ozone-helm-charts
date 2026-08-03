@@ -25,6 +25,7 @@ metadata:
     app.kubernetes.io/component: om
 spec:
   clusterIP: None
+  publishNotReadyAddresses: true
   ports:
     - name: ui
       port: {{ .Values.om.service.port }}

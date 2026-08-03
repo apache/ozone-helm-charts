@@ -49,6 +49,9 @@ spec:
         {{- include "ozone.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: scm
     spec:
+      {{- if gt (int .Values.scm.replicas) 1 }}
+      terminationGracePeriodSeconds: 150
+      {{- end }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets: {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -120,6 +123,21 @@ spec:
             - name: grpc
               containerPort: {{ .Values.scm.service.grpcPort }}
             {{- end }}
+          {{- if gt (int .Values.scm.replicas) 1 }}
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - sh
+                  - -c
+                  - |
+                    LEADER_HOST=$(ozone admin scm roles 2>/dev/null | grep LEADER | cut -d: -f1)
+                    if [ "$LEADER_HOST" = "$(hostname -f)" ]; then
+                      echo "This SCM is leader, transferring leadership..."
+                      ozone admin scm transfer -id {{ .Values.clusterId }} -r || true
+                      sleep 10
+                    fi
+          {{- end }}
           livenessProbe:
             httpGet:
               path: /
