@@ -27,6 +27,9 @@ spec:
       labels:
         {{- include "ozone.selectorLabels" $ | nindent 8 }}
         app.kubernetes.io/component: helm-manager
+      {{- with $.Values.helm.podAnnotations }}
+      annotations: {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       {{- with $.Values.imagePullSecrets }}
       imagePullSecrets: {{- toYaml . | nindent 8 }}
@@ -37,6 +40,9 @@ spec:
           imagePullPolicy: {{ $.Values.image.pullPolicy }}
           {{- with $.Values.om.command }}
           command: {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          {{- with $.Values.helm.resources }}
+          resources: {{- toYaml . | nindent 12 }}
           {{- end }}
           args:
             - sh
