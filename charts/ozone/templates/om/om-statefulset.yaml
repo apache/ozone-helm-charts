@@ -126,10 +126,10 @@ spec:
                 - -c
                 - |
                   ozone admin om roles -id {{ .Values.clusterId }} 2>/dev/null | grep $(hostname) | grep -qE 'LEADER|FOLLOWER' && exit 0 || exit 1
-            initialDelaySeconds: 10
-            periodSeconds: 10
-            timeoutSeconds: 20
-            failureThreshold: 3
+            initialDelaySeconds: {{ .Values.om.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.om.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.om.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.om.readinessProbe.failureThreshold }}
           {{- end }}
           livenessProbe:
             httpGet:

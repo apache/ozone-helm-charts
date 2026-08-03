@@ -144,10 +144,10 @@ spec:
                 - -c
                 - |
                   ozone admin scm roles 2>/dev/null | grep $(hostname -f) | grep -qE 'LEADER|FOLLOWER' && exit 0 || exit 1
-            initialDelaySeconds: 10
-            periodSeconds: 10
-            timeoutSeconds: 20
-            failureThreshold: 3
+            initialDelaySeconds: {{ .Values.scm.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.scm.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.scm.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.scm.readinessProbe.failureThreshold }}
           {{- end }}
           livenessProbe:
             httpGet:
