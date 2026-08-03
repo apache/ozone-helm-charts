@@ -50,7 +50,7 @@ spec:
         app.kubernetes.io/component: scm
     spec:
       {{- if gt (int .Values.scm.replicas) 1 }}
-      terminationGracePeriodSeconds: 150
+      terminationGracePeriodSeconds: {{ .Values.scm.terminationGracePeriodSeconds }}
       {{- end }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets: {{- toYaml . | nindent 8 }}
@@ -137,6 +137,19 @@ spec:
                       ozone admin scm transfer -id {{ .Values.clusterId }} -r || true
                       sleep 10
                     fi
+          startupProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - |
+                  ozone admin scm roles 2>/dev/null | grep -q $(hostname -f) \
+                  && ozone admin safemode status 2>/dev/null | grep -q 'out of safe mode' \
+                  && exit 0 || exit 1
+            initialDelaySeconds: {{ .Values.scm.startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.scm.startupProbe.periodSeconds }}
+            failureThreshold: {{ .Values.scm.startupProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.scm.startupProbe.timeoutSeconds }}
           {{- end }}
           livenessProbe:
             httpGet:

@@ -146,6 +146,15 @@ om:
   tolerations: []
   # Ozone Manager security context (overwrites common security context)
   securityContext: {}
+  # Graceful termination period for Ozone Manager HA (om.replicas > 1),
+  # allowing leader transfer to complete before the pod is killed
+  terminationGracePeriodSeconds: 150
+  # Startup probe for Ozone Manager HA (used when om.replicas > 1)
+  startupProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 20
+    failureThreshold: 30
   # Ozone Manager service configuration
   service:
     type: ClusterIP
@@ -202,6 +211,15 @@ scm:
   tolerations: []
   # Storage Container Manager security context (overwrites common security context)
   securityContext: {}
+  # Graceful termination period for Storage Container Manager HA (scm.replicas > 1),
+  # allowing leader transfer to complete before the pod is killed
+  terminationGracePeriodSeconds: 150
+  # Startup probe for Storage Container Manager HA (used when scm.replicas > 1)
+  startupProbe:
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 20
+    failureThreshold: 30
   # Storage Container Manager service configuration
   service:
     type: ClusterIP
