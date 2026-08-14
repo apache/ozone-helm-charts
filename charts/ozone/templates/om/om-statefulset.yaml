@@ -24,6 +24,8 @@
 {{- $tolerations := or .Values.om.tolerations .Values.tolerations }}
 {{- $securityContext := or .Values.om.securityContext .Values.securityContext }}
 {{- $bnodes := ternary (splitList "," (include "ozone.om.bootstrap.nodes" .)) (list) (ne "" (include "ozone.om.bootstrap.nodes" .)) }}
+{{/* The bootstrap wrapper replaces the container args, so it can only be used with the image entrypoint (i.e. no custom om.command) */}}
+{{- $bootstrapWrapper := and .Values.om.persistence.enabled (gt (len $bnodes) 0) (not .Values.om.command) }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -55,28 +57,6 @@ spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets: {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if and .Values.om.persistence.enabled (gt (len $bnodes) 0) }}
-      initContainers:
-        - name: om-bootstrap
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["/bin/sh", "/scripts/om-bootstrap.sh"]
-          env:
-            {{- include "ozone.configuration.env" . | nindent 12 }}
-            {{- with $env }}
-              {{- tpl (toYaml .) $ | nindent 12 }}
-            {{- end }}
-          {{- with $envFrom }}
-          envFrom: {{- tpl (toYaml .) $ | nindent 12 }}
-          {{- end }}
-          volumeMounts:
-            - name: config
-              mountPath: {{ .Values.configuration.dir }}
-            - name: {{ .Release.Name }}-om
-              mountPath: {{ .Values.om.persistence.path }}
-            - name: om-bootstrap-script
-              mountPath: /scripts
-      {{- end }}
       containers:
         - name: om
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -84,7 +64,11 @@ spec:
           {{- with .Values.om.command }}
           command: {{- tpl (toYaml .) $ | nindent 12 }}
           {{- end }}
+          {{- if $bootstrapWrapper }}
+          args: ["/bin/sh", "/scripts/om-bootstrap.sh"]
+          {{- else }}
           args: {{- tpl (toYaml .Values.om.args) $ | nindent 12 }}
+          {{- end }}
           env:
             {{- include "ozone.configuration.env" . | nindent 12 }}
             - name: WAITFOR
@@ -132,6 +116,10 @@ spec:
               mountPath: {{ .Values.configuration.dir }}
             - name: {{ .Release.Name }}-om
               mountPath: {{ .Values.om.persistence.path }}
+            {{- if $bootstrapWrapper }}
+            - name: om-bootstrap-script
+              mountPath: /scripts
+            {{- end }}
       {{- with $nodeSelector }}
       nodeSelector: {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -145,7 +133,7 @@ spec:
       securityContext: {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
-        {{- if and .Values.om.persistence.enabled (gt (len $bnodes) 0) }}
+        {{- if $bootstrapWrapper }}
         - name: om-bootstrap-script
           configMap:
             name: {{ .Release.Name }}-om-bootstrap-script
