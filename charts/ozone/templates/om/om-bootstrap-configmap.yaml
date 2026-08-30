@@ -1,4 +1,4 @@
-{{- if and .Values.om.persistence.enabled (gt (len (ternary (splitList "," (include "ozone.om.bootstrap.nodes" .)) (list) (ne "" (include "ozone.om.bootstrap.nodes" .)))) 0) }}
+{{- if and .Values.om.persistence.enabled (gt (len (ternary (splitList "," (include "ozone.om.bootstrap.nodes" .)) (list) (ne "" (include "ozone.om.bootstrap.nodes" .)))) 0) (not .Values.om.command) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -22,7 +22,7 @@ data:
 
     if [ -z "$OZONE_OM_BOOTSTRAP_NODES" ]; then
       echo "No bootstrap handling needed!"
-      exit 0
+      exec $OZONE_OM_ARGS_LIST
     fi
 
     joinArr() {
@@ -32,23 +32,41 @@ data:
 
     run_bootstrap() {
       local overwriteCmd="$1"
-      local max_attempts=3
+      local max_attempts=6
       local attempt=1
       local base_delay=5
       local exit_code=0
+      local child=""
+      local joined=false
       
       echo "Bootstrapping node config for this node: $overwriteCmd"
+
+      trap 'kill -TERM "$child" 2>/dev/null || true' TERM INT
       
       while [ $attempt -le $max_attempts ]; do
         echo "Bootstrap attempt $attempt of $max_attempts"
         
-        if ozone admin om --set "ozone.om.nodes.$OZONE_CLUSTER_ID=$overwriteCmd" --bootstrap; then
+        ozone om --set "ozone.om.nodes.$OZONE_CLUSTER_ID=$overwriteCmd" --bootstrap &
+        child=$!
+        joined=false
+
+        while kill -0 "$child" 2>/dev/null; do
+          if ozone admin om roles -id="$OZONE_CLUSTER_ID" 2>/dev/null | grep -q "^$HOSTNAME "; then
+            joined=true
+            break
+          fi
+          sleep 10
+        done
+
+        if [ "$joined" = true ]; then
           echo "$HOSTNAME was successfully bootstrapped!"
           mkdir -p "$HELM_MANAGER_PATH"
           touch "$HELM_MANAGER_BOOTSTRAPPED_FILE"
+          wait "$child" || exit $?
           exit 0
         else
-          exit_code=$?
+          exit_code=0
+          wait "$child" || exit_code=$?
           echo "Bootstrap failed with exit code $exit_code, attempt $attempt of $max_attempts"
           
           if [ $attempt -lt $max_attempts ]; then
@@ -93,6 +111,6 @@ data:
       run_bootstrap "$overwriteCmd"
     else
       echo "$HOSTNAME must not be started with bootstrap arg, or is already bootstrapped."
-      exit 0
+      exec $OZONE_OM_ARGS_LIST
     fi
 {{- end }}
