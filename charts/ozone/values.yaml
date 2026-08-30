@@ -286,11 +286,11 @@ helm:
   env: []
   # Additional Helm Manager envFrom items to set up environment variables (templated)
   envFrom: []
-  # Storage Container Manager resource requests and limits
+  # Helm Manager Job resource requests and limits
   resources: {}
-  # Extra annotations for Storage Container Manager pods
+  # Extra annotations for Helm Manager Job pods
   podAnnotations: {}
-  # Constrain Storage Container Manager pods to nodes with specific node labels
+  # Constrain Helm Manager pods to nodes with specific node labels
   nodeSelector: {}
   # Constrain Helm Manager pods to nodes by affinity/anti-affinity rules
   affinity: {}
@@ -303,20 +303,6 @@ helm:
   # This can happen if PVC has been deleted or is not reachable.
   # This is used for decommissioning OM
   backoffLimit: 5
-  # Helm Manager persistence (this is enabled automatically if al least one
-  # of datanode, scm or om is enabled)
-  persistence:
-    # Enable persistence
-    enabled: false
-    # Persistence access modes
-    accessModes:
-      - ReadWriteOnce
-    # Path for Storage Container Manager volume mount
-    path: /data
-    # Volume size
-    size: 10Gi
-    # The name of a specific storage class name to use
-    storageClassName: ~
 
 # Recon configuration
 recon:
