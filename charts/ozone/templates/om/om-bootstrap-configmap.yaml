@@ -11,7 +11,8 @@ data:
     #!/bin/sh
     set -e
 
-    HELM_MANAGER_PATH="{{ .Values.om.persistence.path }}{{ .Values.helm.persistence.path }}"
+    # "/data" is a fixed marker-subdirectory name, not user-configurable.
+    HELM_MANAGER_PATH="{{ .Values.om.persistence.path }}/data"
     HELM_MANAGER_BOOTSTRAPPED_FILE="$HELM_MANAGER_PATH/bootstrapped"
 
     # These are templated from Helm
