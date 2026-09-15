@@ -146,6 +146,12 @@ om:
   tolerations: []
   # Ozone Manager security context (overwrites common security context)
   securityContext: {}
+  # Readiness probe for Ozone Manager HA (used when om.replicas > 1)
+  readinessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 20
+    failureThreshold: 3
   # Ozone Manager service configuration
   service:
     type: ClusterIP
@@ -202,6 +208,12 @@ scm:
   tolerations: []
   # Storage Container Manager security context (overwrites common security context)
   securityContext: {}
+  # Readiness probe for Storage Container Manager HA (used when scm.replicas > 1)
+  readinessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 20
+    failureThreshold: 3
   # Storage Container Manager service configuration
   service:
     type: ClusterIP
