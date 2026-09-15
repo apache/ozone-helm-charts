@@ -33,6 +33,7 @@ metadata:
     app.kubernetes.io/component: om
 spec:
   replicas: {{ .Values.om.replicas }}
+  podManagementPolicy: Parallel
   serviceName: {{ .Release.Name }}-om-headless
   selector:
     matchLabels:
@@ -50,7 +51,7 @@ spec:
         app.kubernetes.io/component: om
     spec:
       {{- if gt (int .Values.om.replicas) 1 }}
-      terminationGracePeriodSeconds: 150
+      terminationGracePeriodSeconds: {{ .Values.om.terminationGracePeriodSeconds }}
       {{- end }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets: {{- toYaml . | nindent 8 }}
@@ -118,6 +119,17 @@ spec:
                       ozone admin om transfer -id {{ .Values.clusterId }} -r || true
                       sleep 10
                     fi
+          startupProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - |
+                  ozone admin om roles -id {{ .Values.clusterId }} 2>/dev/null | grep -q $(hostname) && exit 0 || exit 1
+            initialDelaySeconds: {{ .Values.om.startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.om.startupProbe.periodSeconds }}
+            failureThreshold: {{ .Values.om.startupProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.om.startupProbe.timeoutSeconds }}
           {{- end }}
           livenessProbe:
             httpGet:
