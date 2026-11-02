@@ -19,7 +19,7 @@ on:
   pull_request:
     types: [opened, synchronize]
     branches-ignore:
-      - 'dependabot/**'
+      - 'dependabot**'
     paths-ignore:
       # ignore files/dirs irrelevant for CI
       - '.asf.yaml'
