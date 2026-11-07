@@ -18,8 +18,6 @@ name: Test Charts
 on:
   pull_request:
     types: [opened, synchronize]
-    branches-ignore:
-      - 'dependabot/**'
     paths-ignore:
       # ignore files/dirs irrelevant for CI
       - '.asf.yaml'
@@ -30,6 +28,8 @@ on:
       - '.github/**'
       - '!.github/workflows/test.yaml'
   push:
+    branches-ignore:
+      - 'dependabot/**'
     paths-ignore:
       # ignore files/dirs irrelevant for CI
       - '.asf.yaml'
@@ -71,8 +71,8 @@ jobs:
         env:
           base_ref: ${{ github.base_ref }}
 
-      - name: Find changes (push)
-        if: github.event_name != 'pull_request'
+      - name: Trigger all tests (push or dependabot)
+        if: github.event_name != 'pull_request' || startsWith(github.ref_name, 'dependabot')
         run: |
           echo "test_scope=--all" >> "$GITHUB_ENV"
 
