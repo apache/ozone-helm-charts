@@ -24,6 +24,7 @@ on:
       - '.gitignore'
       - '**.md'
       - '**.txt'
+      - '!charts/**/templates/**'
       # ignore .github except this workflow and the ones used transitively
       - '.github/**'
       - '!.github/workflows/test.yaml'
@@ -36,6 +37,7 @@ on:
       - '.gitignore'
       - '**.md'
       - '**.txt'
+      - '!charts/**/templates/**'
       # ignore .github except this workflow and the ones used transitively
       - '.github/**'
       - '!.github/workflows/test.yaml'
